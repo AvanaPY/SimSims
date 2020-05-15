@@ -2,7 +2,7 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 
-from simsims import SimsSims
+from sim_assets import SimsSims
 
 
 DIMS = (1200, 800)
