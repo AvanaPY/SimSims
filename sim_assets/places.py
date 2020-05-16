@@ -53,7 +53,7 @@ class Place:
 #       NODES
 ####################
 class Node(Place):
-    def __init__(self, name, dims=(60, 60), background=(255, 255, 255), border=(0, 0, 0)):
+    def __init__(self, name, dims=(160, 160), background=(255, 255, 255), border=(0, 0, 0)):
         super().__init__(name)
         self._dims = dims
         self._background = background
@@ -63,6 +63,19 @@ class Node(Place):
         surface = pygame.Surface(self._dims, pygame.SRCALPHA).convert_alpha()
         surface.fill(self._background)
         pygame.draw.rect(surface, (self._border), pygame.Rect(0, 0, self._dims[0], self._dims[1]), 1)
+
+        offset = 5
+        x, y = 0, 0
+        for resource in self._resources:
+            blit = resource.blit()
+            w, h = blit.get_size()
+            if x + w > self._dims[0]:
+                y += h + offset
+                x = 0
+            elif y + h > self._dims[1]:
+                break
+            surface.blit(blit, (x + w / 2, y + h / 2))
+            x += w + offset
         return surface
 
     def point_in_place(self, x, y):
@@ -156,10 +169,10 @@ class Diner(Node):
     def insert(self, r: Resource):
         if isinstance(r, (Worker, Food)):
             self._resources.append(r)
+
 ###################
 #    CONTAINERS
 ###################
-
 class Container(Place):
     def __init__(self, name, radius=40, background=(255, 255, 255), border=(0, 0, 0)):
         super().__init__(name)

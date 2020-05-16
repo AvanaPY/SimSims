@@ -89,6 +89,8 @@ class SimsSims:
                 btn.call()
             else:
                 self._map.build(mouse_x, mouse_y)
+        elif button == pygame.BUTTON_RIGHT:
+            self._map.deselect_selctions()
 
     def exit(self):
         sys.exit()
@@ -97,12 +99,16 @@ class SimsSims:
         self._window.fill(BACKGROUND_COLOUR)
         self._window.blit(self._map.blit(self._dims, self._places_name_font), (0, 0))
 
-        build_preview = self._map.selected_build_preview()
+        build_preview, text = self._map.selected_build_preview()
         if build_preview:
             w, h = build_preview.get_size()
             mx, my = pygame.mouse.get_pos()
-            mx, my = mx - w / 2, my - h / 2
-            self._window.blit(build_preview, (mx, my))
+            self._window.blit(build_preview, (mx - w / 2, my - h / 2))
+
+            text_blit = self._places_name_font.render(text, True, (0, 0, 0))
+            tw, th = text_blit.get_size()
+            self._window.blit(text_blit, (mx - tw / 2, my - th / 2))
+
         for ui_element in self._ui:
             if not ui_element.hidden:
                 self._window.blit(ui_element.blit, ui_element.position)

@@ -15,6 +15,10 @@ class Map:
         self._selected_resource_type = r
         self._selected_build_type = None
 
+    def deselect_selctions(self):
+        self._selected_resource_type = None
+        self._selected_build_type = None
+
     def get_place_at(self, x, y):
         place = None
         for p in self._places:
@@ -36,10 +40,11 @@ class Map:
     
     def selected_build_preview(self):
         if self._selected_build_type:
-            blit = self._selected_build_type().blit()
+            t = self._selected_build_type()
+            blit = t.blit()
             blit.fill((0, 180, 220, 100), special_flags=pygame.BLEND_RGBA_MULT)
-            return blit
-        return None
+            return blit, t.name
+        return None, ''
 
     def blit(self, dims, text_font : pygame.font.Font):
         surface = pygame.Surface(dims, pygame.SRCALPHA, 32).convert_alpha()
