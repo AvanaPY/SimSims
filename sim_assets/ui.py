@@ -10,6 +10,9 @@ class UI:
         return self.Iterator(self._buttons)
 
     def add_button(self, btn):
+        """
+            Adds a button object to the ui.
+        """
         self._buttons.append(btn)
 
     class Iterator:

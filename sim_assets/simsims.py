@@ -8,6 +8,8 @@ BACKGROUND_COLOUR = (255, 255, 255)
 pygame.init()
 pygame.display.set_caption(APPLICATION_NAME)
 
+import threading
+
 from .pygame_assets import Button
 from . import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
 from . import Worker, Food, Product
@@ -56,11 +58,16 @@ class SimsSims:
         ############################################################
         # The map itself of nodes etc.
         self._map = Map()
+        self._started_sim = False
 
     def start(self):
+        """
+            Starts the application.
+        """
+        thread_lock = threading.Lock()
         self._running = True
         while self._running:
-            delta_time = self._clock.tick(self._framerate) * 0.001
+            delta_time = self._clock.tick(self._framerate) * 0.001 # Mult by 0.001 to get it in milliseconds
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE): self.exit()
@@ -68,18 +75,36 @@ class SimsSims:
                     x, y = event.pos
                     self.mouse_down(x, y, event.button)
 
-            self.render()
+            if self._started_sim:
+                for node in self._map.places:
+                    node.update()
+
+            with thread_lock:
+                self.render()
 
     def start_simulation(self):
+        """
+            Starts the simulation.
+        """
         self.start_button.hide()
-
+        self._started_sim = True
+        
     def map_select_build(self, t):
+        """
+            Wrapper for Map.select_build_type
+        """
         self._map.select_build_type(t)
 
     def map_select_resource(self, r):
+        """
+            Wrapper for Map.select_resource_type
+        """
         self._map.select_resource_type(r)
 
     def mouse_down(self, mouse_x, mouse_y, button):
+        """
+            Handles the mouse down event.
+        """
         if button == pygame.BUTTON_LEFT:
             btn = None
             for button in self._ui.buttons:
@@ -88,14 +113,23 @@ class SimsSims:
             if btn:
                 btn.call()
             else:
-                self._map.build(mouse_x, mouse_y)
+                if self._map.can_build():
+                    self._map.build(mouse_x, mouse_y)
+                else:
+                    self._map.select_building_at(mouse_x, mouse_y)
         elif button == pygame.BUTTON_RIGHT:
-            self._map.deselect_selctions()
+            self._map.deselect_selections()
 
     def exit(self):
+        """
+            Exits the simulation.
+        """
         sys.exit()
 
     def render(self):
+        """
+            Renders the simulation and flips the display's pixels.
+        """
         self._window.fill(BACKGROUND_COLOUR)
         self._window.blit(self._map.blit(self._dims, self._places_name_font), (0, 0))
 

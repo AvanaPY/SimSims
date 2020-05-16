@@ -16,8 +16,15 @@ class Worker(Resource):
         super().__init__('Worker', (0, 0, 0))
         self._viability = 1
 
+    def restore_viability(self, viability=1):
+        self._viability = viability
+
+    def add_viability(self, viability):
+        self._viability += viability
+
     def damage(self, viability):
         self._viability -= viability
+        return self._viability <= 0
     
 class Food(Resource):
     def __init__(self):
