@@ -17,7 +17,7 @@ def bernstein_poly(i, n, t):
 
     return ncr(n, i) * (t ** (n - i)) * (1 - t)**i
     
-def compute_bezier_points(points, n_times=1000):
+def compute_bezier_points(points, n_times=25):
 
     nPoints = len(points)
     xPoints = np.array([p[0] for p in points])
