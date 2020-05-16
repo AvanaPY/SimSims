@@ -3,7 +3,7 @@ import pygame
 
 
 APPLICATION_NAME = 'SimsSims'
-BACKGROUND_COLOUR = (40, 40, 40)
+BACKGROUND_COLOUR = (255, 255, 255)
 
 pygame.init()
 pygame.display.set_caption(APPLICATION_NAME)
@@ -19,7 +19,8 @@ class SimsSims:
         self._dims = dims
         self._window = pygame.display.set_mode(dims)
 
-        self._main_font  = pygame.font.SysFont('Times New Roman', 24)
+        self._main_font = pygame.font.SysFont('Times New Roman', 24)
+        self._places_name_font = pygame.font.SysFont('Times New Roman', 14)
 
         self._running = False
 
@@ -41,7 +42,7 @@ class SimsSims:
         for i, t in enumerate(selections):
             place = t()
             btn = Button(place.name, self._main_font, ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 0.75), (select_btn_width, select_btn_height),
-                    self.map_select_node, args=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0))
+                    self.map_select_build, args=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0))
             self._ui.add_button(btn)
 
         selections = (Worker, Food, Product)
@@ -49,7 +50,7 @@ class SimsSims:
         for i, t in enumerate(selections):
             resource = t()
             btn = Button(resource.name, self._main_font, ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 2), (select_btn_width, select_btn_height),
-                    self.map_select_container, args=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0))
+                    self.map_select_resource, args=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0))
             self._ui.add_button(btn)
         
         ############################################################
@@ -72,25 +73,36 @@ class SimsSims:
     def start_simulation(self):
         self.start_button.hide()
 
-    def map_select_container(self, t):
-        self._map.select_container_type(t)
+    def map_select_build(self, t):
+        self._map.select_build_type(t)
 
-    def map_select_node(self, t):
-        self._map.select_node_type(t)
+    def map_select_resource(self, r):
+        self._map.select_resource_type(r)
 
     def mouse_down(self, mouse_x, mouse_y, button):
-        btn = None
-        for button in self._ui.buttons:
-            if button.point_in_button(mouse_x, mouse_y):
-                btn = button
-        if btn:
-            btn.call()
+        if button == pygame.BUTTON_LEFT:
+            btn = None
+            for button in self._ui.buttons:
+                if button.point_in_button(mouse_x, mouse_y):
+                    btn = button
+            if btn:
+                btn.call()
+            else:
+                self._map.build(mouse_x, mouse_y)
 
     def exit(self):
         sys.exit()
 
     def render(self):
         self._window.fill(BACKGROUND_COLOUR)
+        self._window.blit(self._map.blit(self._dims, self._places_name_font), (0, 0))
+
+        build_preview = self._map.selected_build_preview()
+        if build_preview:
+            w, h = build_preview.get_size()
+            mx, my = pygame.mouse.get_pos()
+            mx, my = mx - w / 2, my - h / 2
+            self._window.blit(build_preview, (mx, my))
         for ui_element in self._ui:
             if not ui_element.hidden:
                 self._window.blit(ui_element.blit, ui_element.position)

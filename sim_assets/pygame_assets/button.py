@@ -22,7 +22,7 @@ class Button:
             self._dims = (max(txt_dims[0], dims[0]) + padx, max(txt_dims[1], dims[1]) + pady)
 
         # Create the final surface and apply the background colour and border
-        blit = pygame.Surface((self._dims), pygame.SRCALPHA, 32).convert_alpha()
+        blit = pygame.Surface(self._dims)
         blit.fill(background_colour)
         pygame.draw.rect(blit, border_colour, pygame.Rect(0, 0, self._dims[0], self._dims[1]), border_width)
 
