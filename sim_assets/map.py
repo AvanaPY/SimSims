@@ -29,6 +29,9 @@ class Map:
         self._selected_place = None
 
     def select_building_at(self, x, y):
+        """
+            Selects a building that contains the point (x, y)
+        """
         place_at = self.get_place_at(x, y)
         if place_at:
             self._selected_place = place_at
@@ -52,18 +55,27 @@ class Map:
         return place
 
     def disconnect_from_selection(self, x, y):
+        """
+            Disconnects the currently selected place from whichever place contains the point (x, y)
+        """
         if self._selected_place:
             place = self.get_place_at(x, y)
             if place:
                 self._selected_place.disconnect_place(place)
 
     def delete_place_at(self, x, y):
+        """
+            Fully deletes the place that contains the point (x, y), disconnects any connections to that place
+        """
         place = self.get_place_at(x, y)
         if place:
             place.disconnect_all_connections()
             self._places.remove(place)
 
     def can_build(self):
+        """
+            Returns a boolean if any buildable type or place is selected.
+        """
         return self._selected_build_type or self._selected_place or self._selected_resource_type
 
     def build(self, x, y):
@@ -139,4 +151,3 @@ class Map:
             walked += math.dist(b_points[i], b_points[i + 1])
             col = colour_linear_interpolation(start_col, end_col, walked / length)
             pygame.draw.line(surface, col, b_points[i], b_points[i + 1], 3)
-#        pygame.draw.lines(surface, colour_linear_interpolation(), False, b_points, 3)

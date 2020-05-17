@@ -1,7 +1,9 @@
 import pygame
 
-
 class Keybindings:
+    """
+        Keybinding data for SimSims.
+    """
     def __init__(self):
         self.INTERACT = pygame.BUTTON_LEFT
         self.DESELECT = pygame.BUTTON_RIGHT
@@ -20,6 +22,9 @@ class Keybindings:
         self.SELECT_TYPE_PRODUCT  = pygame.K_0
 
     def name_of_key(self, key):
+        """
+            Returns a pygame key name for a key id
+        """
         m = {
             pygame.BUTTON_LEFT: 'Mouse Left',
             pygame.BUTTON_RIGHT: 'Mouse Right'

@@ -1,6 +1,5 @@
 import sys
 import pygame
-from .keybindings import bindings as keybindings
 
 APPLICATION_NAME = 'SimsSims'
 BACKGROUND_COLOUR = (255, 255, 255)
@@ -10,12 +9,11 @@ pygame.display.set_caption(APPLICATION_NAME)
 
 import threading
 
-from .pygame_assets import Button
-from .pygame_assets import Panel
-from . import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
-from . import Worker, Food, Product
-from . import Map
-from . import UI
+from sim_assets import bindings as keybindings
+from ui_assets import UI, Panel, Button
+from sim_assets import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
+from sim_assets import Worker, Food, Product
+from sim_assets import Map
 
 class SimsSims:
     def __init__(self, dims, framerate=60):
@@ -154,6 +152,9 @@ class SimsSims:
             self._map.deselect_selections()
 
     def handle_keyboard_input(self, mouse_x, mouse_y, button):
+        """
+            Handles keyboard input.
+        """
         if button == keybindings.DISCONNECT_PLACE_CONNECTIONS:
             self.disconnect_connection(mouse_x, mouse_y)
         elif button == keybindings.DELETE_PLACE:
@@ -164,9 +165,15 @@ class SimsSims:
                     btn.call()
 
     def disconnect_connection(self, mouse_x, mouse_y):
+        """
+            Wrapper for Map.disconnect_from_selection
+        """
         self._map.disconnect_from_selection(mouse_x, mouse_y)
 
     def delete_place_at(self, mouse_x, mouse_y):
+        """
+            Wrapper for Map.delete_place_at
+        """
         self._map.delete_place_at(mouse_x, mouse_y)
 
     def exit(self):
@@ -182,6 +189,7 @@ class SimsSims:
         self._window.fill(BACKGROUND_COLOUR)
         self._window.blit(self._map.blit(self._dims, self._places_name_font), (0, 0))
 
+        # Renders the preview of what is about to be built if possible
         build_preview, text = self._map.selected_build_preview()
         if build_preview:
             w, h = build_preview.get_size()
@@ -192,6 +200,7 @@ class SimsSims:
             tw, th = text_blit.get_size()
             self._window.blit(text_blit, (mx - tw / 2, my - th / 2))
 
+        # Render all the UI elements
         for ui_element in self._ui:
             if not ui_element.hidden:
                 self._window.blit(ui_element.blit, ui_element.position)

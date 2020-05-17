@@ -1,6 +1,9 @@
 import pygame
 
 class Panel:
+    """
+        A panel that can contain things.
+    """
     def __init__(self, position: tuple, dims: tuple, background_colour: tuple = (40, 40, 40, 100), border_colour: tuple = (0, 0, 0), border_width: int = 3,
                 content_offset=5):
         self._content = []
@@ -35,12 +38,18 @@ class Panel:
     def hidden(self):
         return self._hidden
 
-    def add_text(self, text, font : pygame.font.Font, colour=(0, 0, 0)):
+    def add_text(self, text, font: pygame.font.Font, colour=(0, 0, 0)):
+        """
+            Adds text as content.
+        """
         content = font.render(text, True, colour)
         self._content.append(content)
         self._redraw()
 
     def _redraw(self):
+        """
+            Redraws the blit.
+        """
         self._calculate_width()
         self._blit = pygame.Surface(self._dims, pygame.SRCALPHA, 32).convert_alpha()
         self._blit.fill(self._background_colour)
@@ -52,14 +61,26 @@ class Panel:
             y += cont.get_height() + self._content_offset
 
     def _calculate_width(self):
+        """
+            Calculates the maximum width in the content and assigns it to the dimensionality of the panel.
+        """
         if self._content:
             w = max([self._dims[0]] + [cont.get_width() + self._content_offset * 2 for cont in self._content])
             self._dims = w, self._dims[1]
 
     def move(self, dx, dy):
+        """
+            Moves the panel in both axis.
+        """
         self._position = self.position[0] + dx, self.position[1] + dy
 
     def hide(self):
+        """
+            Hides the panel.
+        """
         self._hidden = True
     def unhide(self):
+        """
+            Unhides the panel.
+        """
         self._hidden = False

@@ -11,6 +11,9 @@ class UI:
         return self.Iterator(self._buttons)
 
     def add_panel(self, panel):
+        """
+            Adds a panel to the UI.        
+        """
         self._panels.append(panel)
 
     def add_button(self, btn):
@@ -20,6 +23,9 @@ class UI:
         self._buttons.append(btn)
 
     class Iterator:
+        """
+            An iterator subclass for improved multithreading if necessary.
+        """
         def __init__(self, data):
             self.data = data
             self.n = len(data)

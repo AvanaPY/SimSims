@@ -23,14 +23,23 @@ class Place:
         return self._position
 
     def uses(self, t):
+        """
+            Returns a boolean if this place uses a type.
+        """
         return t in self._uses
     
     def produces(self, t):
+        """
+            Returns a boolean if this place produces a type.
+        """
         if self._produces:
             return t in self._produces
         return False
 
     def has_required_connections(self):
+        """
+            Returns a boolean if this place has the required connections to operate properly.
+        """
         for t in self._uses:
             uses = False
             for place in self._ingoing_connections:
@@ -48,15 +57,24 @@ class Place:
         return True
 
     def point_in_place(self, x, y):
+        """
+            Returns if this place contains the point (x, y). This is a virtual method.
+        """
         return False
 
     def set_position(self, pos):
+        """
+            Sets the position, keep in mind that the place is then centered on the position.
+        """
         x, y = pos
         w, h = self.dims()
         pos = x - w / 2, y - h / 2
         self._position = pos
 
     def dims(self):
+        """
+            Returns a tuple containing the width and the height of the place.
+        """
         return 0, 0
 
     def blit(self):
@@ -79,6 +97,13 @@ class Place:
 
     ## SimSims
     def _count_resources(self, types):
+        """
+            Counts each resource in types. Types can be of type Resource or a list of Resource types.
+
+            If it's a list, it returns an identical list of counted types.
+
+            If it's a type, it returns a list of size 1.
+        """
         if isinstance(types, (list, tuple)):
             ret = []
             for t in types:
@@ -110,6 +135,9 @@ class Place:
             self._outgoing_connections.append(place)
 
     def disconnect_place(self, place):
+        """
+            Fully disconnects this place from another place.
+        """
         if place in self._ingoing_connections:
             self._ingoing_connections.remove(place)
             place.disconnect_place(self)
@@ -118,6 +146,9 @@ class Place:
             place.disconnect_place(self)
 
     def disconnect_all_connections(self):
+        """
+            Fully disconnects this place from all places it is connected to, both ingoing and outgoing connections.
+        """
         for place in self._ingoing_connections[:] + self._outgoing_connections[:]:
             place.disconnect_place(self)
 
@@ -128,6 +159,9 @@ class Place:
         return False
 
     def update(self):
+        """
+            Update loop, it's a virtual method.
+        """
         pass
 
 ####################
@@ -141,22 +175,29 @@ class Node(Place):
         self._border = border
 
     def blit(self):
+        # Create a surface
         surface = pygame.Surface(self._dims, pygame.SRCALPHA).convert_alpha()
         surface.fill(self._background)
         pygame.draw.rect(surface, (self._border), pygame.Rect(0, 0, self._dims[0], self._dims[1]), 1)
-
+        
+        # If we have all necessary connections we want to indicate this with a green circle inside the form
+        # Else we want to indicate we are missing important connections by drawing a red circle inside the form
+        # The radius of this circle will be half of the original circle.
         x, y = self._dims[0] // 2, self._dims[1] // 2
         has_connections_colour = (0, 200, 0) if self.has_required_connections() else (200, 0, 0)
         pygame.draw.circle(surface, has_connections_colour, (x, y), x // 2, 0)
 
+        # Simply render them in a grid-like manner starting from the top-left
         offset = 5
         x, y = 0, 0
         for resource in self._resources:
             blit = resource.blit()
             w, h = blit.get_size()
+            # If we reach the right edge, increase y and reset x
             if x + w > self._dims[0]:
                 y += h + offset
                 x = 0
+            # If we reach the bottom, simply exit the loop, rendering any more resources would be a waste of time and would look bad
             elif y + h > self._dims[1]:
                 break
             surface.blit(blit, (x + w / 2, y + h / 2))
@@ -176,13 +217,13 @@ class Node(Place):
     def update(self):
         if not self._working:
             if self.get_resources():
-                thread = threading.Thread(target=self.use_resources)
+                thread = threading.Thread(target=self.use_resources, args=(0.1, ))
                 thread.setDaemon(True)
                 thread.start()
 
     def get_resources(self):
         return False
-    def use_resources(self):
+    def use_resources(self, delay=1):
         pass
     def deliver_resource(self, r):
         for place in self._outgoing_connections:
@@ -192,13 +233,13 @@ class Node(Place):
         return False
 
 class Factory(Node):
+    VIABILITY_DIFF = 0.1
+    CHANCE_OF_ACCIDENT = 0.05
     def __init__(self):
         super().__init__('Factory', (Worker,), (Worker, Product,))
-        self._viability_diff = 0.1
-        self._chance_of_accident = 0.05
 
     def random_accident(self):
-        return random.random() < self._chance_of_accident
+        return random.random() < self.CHANCE_OF_ACCIDENT
 
     def use_resources(self, delay=2):
         self._working = True
@@ -214,7 +255,7 @@ class Factory(Node):
             if t == Product:
                 self.deliver_resource(resource)
             elif t == Worker:
-                if self.random_accident() or resource.damage(self._viability_diff):
+                if self.random_accident() or resource.damage(self.VIABILITY_DIFF):
                     self._resources.remove(resource)
                 else:
                     self.deliver_resource(resource)
@@ -236,12 +277,12 @@ class Factory(Node):
         return False
 
 class Field(Node):
+    CHANCE_OF_ACCIDENT = 0.05
     def __init__(self):
         super().__init__('Field', (Worker,), (Worker, Food,))
-        self._chance_of_accident = 0.05
 
     def random_accident(self):
-        return random.random() < self._chance_of_accident
+        return random.random() < self.CHANCE_OF_ACCIDENT
 
     def use_resources(self, delay=1):
         self._working = True
@@ -278,6 +319,7 @@ class Field(Node):
         return False
 
 class Flat(Node):
+    VIABILITY_INCREASE = 0.1
     def __init__(self):
         super().__init__('Flat', (Worker, Product), (Worker, ))
 
@@ -291,7 +333,7 @@ class Flat(Node):
         else:
             for resource in self._resources[:]:
                 if type(resource) == Worker:
-                    resource.restore_viability()
+                    resource.add_viability(self.VIABILITY_INCREASE)
         for resource in self._resources:
             if type(resource) == Product:
                 self._resources.remove(resource)
@@ -324,16 +366,17 @@ class Flat(Node):
         return False
 
 class Diner(Node):
+    MAX_VIABILITY_INCREASE = 0.3
+    MIN_VIABILITY_INCREASE = 0.1
+    FOOD_POISON_CHANCE = 0.2
+    FOOD_POISON_FACTOR = -0.2
     def __init__(self):
         super().__init__('Diner', (Worker, Food), (Worker, ))
-        self._max_viability_increase = 0.3
-        self._min_viability_increase = 0.1
-        self._food_poison_chance = 0.2
-        self._food_poison_factor = -0.2
 
     @property
     def viability(self):
-        return (self._food_poison_factor if random.random() < self._food_poison_chance else 1) * random.uniform(self._min_viability_increase, self._max_viability_increase)
+        return (self.FOOD_POISON_FACTOR if random.random() < self.FOOD_POISON_CHANCE else 1) * random.uniform(self.MIN_VIABILITY_INCREASE, self.MAX_VIABILITY_INCREASE)
+
     def use_resources(self, delay=1):
         self._working = True
 
@@ -387,35 +430,56 @@ class Container(Place):
         return self._dims
 
     def blit(self):
+        # Create a surface, get the midpoint
         surface = pygame.Surface(self._dims, pygame.SRCALPHA).convert_alpha()
         x, y = (self._dims[0] // 2, self._dims[1] // 2)
+
+        # Render two circles of slightly different radi to create a circle with an outline.
         pygame.draw.circle(surface, self._background, (x, y), self._radius-2, 0)
         pygame.draw.circle(surface, self._border, (x, y), self._radius, 2)
         
         x, y = self._dims[0] // 2, self._dims[1] // 2
-        has_connections_colour = (0, 200, 0) if self.has_required_connections() else (200, 0, 0)
-        pygame.draw.circle(surface, has_connections_colour, (x, y), x // 2, 0)
 
-        max_resources_per_round = 25
-        resources_to_render = self._resources[:]  # Copy the array
-        round_count = 1
-        while len(resources_to_render) > 0:
-            r = self._radius * (1 - 0.2 * round_count)
-            angle = -math.pi / 2.
-            angle_delta = 2 * math.pi / min(len(resources_to_render), max_resources_per_round)
-            for resource in resources_to_render[:max_resources_per_round]:
-                x, y = math.cos(angle) * r + self._dims[0] / 2, math.sin(angle) * r + self._dims[1] / 2
-                blit = resource.blit()
-                w, h = blit.get_size()
-                surface.blit(blit, (x - w / 2, y - h / 2))
-                resources_to_render.remove(resource)
-                angle += angle_delta
-            round_count += 1
+        # If we have all necessary connections we want to indicate this with a green circle inside the form
+        # Else we want to indicate we are missing important connections by drawing a red circle inside the form
+        # The radius of this circle will be half of the original circle.
+        has_connections_colour = (0, 200, 0) if self.has_required_connections() else (200, 0, 0)
+        pygame.draw.circle(surface, has_connections_colour, (x, y), self._radius // 2, 0)
+
+        # We're going to render them in a circle
+        # So we want a maximum amount of resources to render per "loop" inside the circle
+        max_resources_per_loop = 10
+
+        # Manage how many loops around the circle we have done
+        loop_counter = 1
+        loop_radius_diff = 0.2
+        r = self._radius * (1 - loop_radius_diff * loop_counter)
+
+        # We have to keep track of the angle we are at and increase it by a percentage of a full circle
+        angle = 0
+        angle_offset = -math.pi / 2
+        angle_delta = 2 * math.pi / max_resources_per_loop
+
+        for resource in self._resources:
+            # Compute the x-y coordinate and offset it so it's from the center of the circle
+            x, y = math.cos(angle + angle_offset) * r + self._dims[0] / 2, math.sin(angle + angle_offset) * r + self._dims[1] / 2
             
+            # Get the resource's blit and dimensions
+            blit = resource.blit()
+            w, h = blit.get_size()
+            
+            # Blit it, increase the angle
+            surface.blit(blit, (x - w / 2, y - h / 2))
+            angle += angle_delta
+
+            # If we have gone a whole loop, reset angle, increase the loop counter and recalculate the radius
+            if angle > math.pi * 2:
+                loop_counter += 1
+                r = self._radius * (1 - loop_radius_diff * loop_counter)
+                angle = 0
         return surface
         
     def point_in_place(self, x, y):
-
         sx, sy = self.position
         w, h = self._dims
         if x < sx or x > sx + w or y < sy or y > sy + h:
@@ -449,6 +513,7 @@ class Barn(Container):
             self._resources.append(r)
             return True
         return False
+
 class Road(Container):
     def __init__(self):
         super().__init__('Road', (Worker,), (Worker,))

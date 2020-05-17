@@ -1,6 +1,9 @@
 import pygame
 
 class Button:
+    """
+        A button
+    """
     def __init__(self, text: str, font: pygame.font.Font,
                 position: tuple, dims: tuple, func, args: list = None, keybinding=None,
                 text_aa=True, text_colour: tuple = (255, 255, 255),
@@ -54,14 +57,26 @@ class Button:
         return self._keybinding
 
     def move(self, dx, dy):
+        """
+            Moves the button in both axis.
+        """
         self._position = self.position[0] + dx, self.position[1] + dy
 
     def hide(self):
+        """
+            Hides the button.
+        """
         self._hidden = True
     def unhide(self):
+        """
+            Unhides the button.
+        """
         self._hidden = False
 
     def point_in_button(self, x, y):
+        """
+            Returns a boolean if a point (x, y) is contained inside the button, useful for checking if it's about to be clicked.
+        """
         if self._hidden:
             return False
         if x < self._position[0] or x > self._position[0] + self._dims[0] or y < self._position[1] or y > self._position[1] + self._dims[1]:
@@ -69,6 +84,9 @@ class Button:
         return True
 
     def call(self):
+        """
+            Method that clals the button's function.
+        """
         if self._args:
             self._func(*self._args)
         else:
