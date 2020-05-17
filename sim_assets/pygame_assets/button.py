@@ -2,7 +2,7 @@ import pygame
 
 class Button:
     def __init__(self, text: str, font: pygame.font.Font,
-                position: tuple, dims: tuple, func, args: list = None,
+                position: tuple, dims: tuple, func, args: list = None, keybinding=None,
                 text_aa=True, text_colour: tuple = (255, 255, 255),
                 background_colour: tuple = (40, 40, 40), border_colour: tuple = (0, 0, 0), border_width: int = 1,
                 expand: bool = True, padx: int = 0, pady: int = 0, centered: bool = True):
@@ -22,7 +22,7 @@ class Button:
             self._dims = (max(txt_dims[0], dims[0]) + padx, max(txt_dims[1], dims[1]) + pady)
 
         # Create the final surface and apply the background colour and border
-        blit = pygame.Surface(self._dims)
+        blit = pygame.Surface(self._dims, pygame.SRCALPHA, 32).convert_alpha()
         blit.fill(background_colour)
         pygame.draw.rect(blit, border_colour, pygame.Rect(0, 0, self._dims[0], self._dims[1]), border_width)
 
@@ -35,6 +35,8 @@ class Button:
         else:
             self._position = position
         self._hidden = False
+
+        self._keybinding = keybinding
     @property
     def blit(self):
         return self._blit
@@ -46,6 +48,13 @@ class Button:
     @property
     def hidden(self):
         return self._hidden
+
+    @property
+    def keybinding(self):
+        return self._keybinding
+
+    def move(self, dx, dy):
+        self._position = self.position[0] + dx, self.position[1] + dy
 
     def hide(self):
         self._hidden = True

@@ -1,6 +1,6 @@
 import sys
 import pygame
-
+from .keybindings import bindings as keybindings
 
 APPLICATION_NAME = 'SimsSims'
 BACKGROUND_COLOUR = (255, 255, 255)
@@ -11,6 +11,7 @@ pygame.display.set_caption(APPLICATION_NAME)
 import threading
 
 from .pygame_assets import Button
+from .pygame_assets import Panel
 from . import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
 from . import Worker, Food, Product
 from . import Map
@@ -22,6 +23,7 @@ class SimsSims:
         self._window = pygame.display.set_mode(dims)
 
         self._main_font = pygame.font.SysFont('Times New Roman', 24)
+        self._mid_font = pygame.font.SysFont('Times New Roman', 18)
         self._places_name_font = pygame.font.SysFont('Times New Roman', 14)
 
         self._running = False
@@ -33,9 +35,23 @@ class SimsSims:
         # The graphical user interface
         self._ui: UI = UI()
 
-        self.start_button = Button('Start Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.start_simulation(),
+        self._start_button = Button('Start Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.start_simulation(),
                                     background_colour=(200, 0, 0), padx=25, pady=10)
-        self._ui.add_button(self.start_button)
+        self._ui.add_button(self._start_button)
+
+        self._show_keybind_panel = False
+        self._toggle_keybindings_button = Button('Show Keybindigs', self._mid_font, (5, 5), (100, 20), func=self._toggle_keybindings_panel,
+                                                background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), padx=25, centered=False)
+        self._ui.add_button(self._toggle_keybindings_button)
+
+        self._keybind_panel = Panel((0, 0), (100, dims[1]))
+        self._ui.add_panel(self._keybind_panel)
+
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DISCONNECT_PLACE_CONNECTIONS)} - Disconnect connections (Mouse Over)', self._mid_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DELETE_PLACE)} - Delete a place (Mouse Over)', self._mid_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.INTERACT)} - Build/Select (Mouse Over)', self._mid_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DESELECT)} - Remove selection (Mouse Over)', self._mid_font)
+        self._keybind_panel.hide()
 
         selections = (Magazine, Barn, Road, Factory, Field, Flat, Diner)
 
@@ -43,16 +59,22 @@ class SimsSims:
         select_btn_height = 30
         for i, t in enumerate(selections):
             place = t()
-            btn = Button(place.name, self._main_font, ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 0.75), (select_btn_width, select_btn_height),
-                    self.map_select_build, args=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0))
+            key = getattr(keybindings, f'SELECT_TYPE_{place.name.upper()}')
+            btn = Button(f'{place.name} ({keybindings.name_of_key(key)})', self._main_font,
+                    ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 0.75), (select_btn_width, select_btn_height),
+                    self.map_select_build, args=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0),
+                    keybinding=key)
             self._ui.add_button(btn)
 
         selections = (Worker, Food, Product)
         select_btn_width  = self._dims[0] / len(selections)
         for i, t in enumerate(selections):
             resource = t()
-            btn = Button(resource.name, self._main_font, ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 2), (select_btn_width, select_btn_height),
-                    self.map_select_resource, args=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0))
+            key = getattr(keybindings, f'SELECT_TYPE_{resource.name.upper()}')
+            btn = Button(f'{resource.name} ({keybindings.name_of_key(key)})', self._main_font,
+                    ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 2), (select_btn_width, select_btn_height),
+                    self.map_select_resource, args=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0),
+                    keybinding=key)
             self._ui.add_button(btn)
         
         ############################################################
@@ -74,6 +96,8 @@ class SimsSims:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = event.pos
                     self.mouse_down(x, y, event.button)
+                if event.type == pygame.KEYDOWN:
+                    self.handle_keyboard_input(*pygame.mouse.get_pos(), event.key)
 
             if self._started_sim:
                 for node in self._map.places:
@@ -86,9 +110,18 @@ class SimsSims:
         """
             Starts the simulation.
         """
-        self.start_button.hide()
+        self._start_button.hide()
         self._started_sim = True
         
+    def _toggle_keybindings_panel(self):
+        self._show_keybind_panel = not self._show_keybind_panel
+        if self._show_keybind_panel:
+            self._toggle_keybindings_button.move(self._keybind_panel.dims[0], 0)
+            self._keybind_panel.unhide()
+        else:
+            self._toggle_keybindings_button.move(-self._keybind_panel.dims[0], 0)
+            self._keybind_panel.hide()
+    
     def map_select_build(self, t):
         """
             Wrapper for Map.select_build_type
@@ -105,7 +138,7 @@ class SimsSims:
         """
             Handles the mouse down event.
         """
-        if button == pygame.BUTTON_LEFT:
+        if button == keybindings.INTERACT:
             btn = None
             for button in self._ui.buttons:
                 if button.point_in_button(mouse_x, mouse_y):
@@ -117,8 +150,24 @@ class SimsSims:
                     self._map.build(mouse_x, mouse_y)
                 else:
                     self._map.select_building_at(mouse_x, mouse_y)
-        elif button == pygame.BUTTON_RIGHT:
+        elif button == keybindings.DESELECT:
             self._map.deselect_selections()
+
+    def handle_keyboard_input(self, mouse_x, mouse_y, button):
+        if button == keybindings.DISCONNECT_PLACE_CONNECTIONS:
+            self.disconnect_connection(mouse_x, mouse_y)
+        elif button == keybindings.DELETE_PLACE:
+            self.delete_place_at(mouse_x, mouse_y)
+        else:
+            for btn in self._ui.buttons:
+                if btn.keybinding == button:
+                    btn.call()
+
+    def disconnect_connection(self, mouse_x, mouse_y):
+        self._map.disconnect_from_selection(mouse_x, mouse_y)
+
+    def delete_place_at(self, mouse_x, mouse_y):
+        self._map.delete_place_at(mouse_x, mouse_y)
 
     def exit(self):
         """

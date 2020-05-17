@@ -1,6 +1,6 @@
 import pygame
 import math
-from .ext import compute_bezier_points
+from .ext import compute_bezier_points, colour_linear_interpolation
 class Map:
     def __init__(self):
         self._places = []
@@ -11,7 +11,7 @@ class Map:
     @property
     def places(self):
         return self._places
-        
+
     def select_build_type(self, t):
         """
             Selects a Place type.
@@ -50,6 +50,18 @@ class Map:
             if p.point_in_place(x, y):
                 place = p
         return place
+
+    def disconnect_from_selection(self, x, y):
+        if self._selected_place:
+            place = self.get_place_at(x, y)
+            if place:
+                self._selected_place.disconnect_place(place)
+
+    def delete_place_at(self, x, y):
+        place = self.get_place_at(x, y)
+        if place:
+            place.disconnect_all_connections()
+            self._places.remove(place)
 
     def can_build(self):
         return self._selected_build_type or self._selected_place or self._selected_resource_type
@@ -118,4 +130,13 @@ class Map:
         orth = -direction[1] * bend_factor, direction[0] * bend_factor
         ctrl_point = pos1[0] + direction[0] * 0.5 + orth[0], pos1[1] + direction[1] * 0.5 + orth[1]
         b_points = compute_bezier_points((pos1, ctrl_point, pos2))
-        pygame.draw.lines(surface, (200, 0, 0), False, b_points, 3)
+        length = sum([math.dist(b_points[i], b_points[i + 1]) for i in range(len(b_points) - 1)])  # Evaluate sum of all the "segment" lengths of the bezier curve
+        walked = 0
+
+        start_col = (255, 0, 0)
+        end_col = (0, 120, 255)
+        for i in range(len(b_points) - 1):
+            walked += math.dist(b_points[i], b_points[i + 1])
+            col = colour_linear_interpolation(start_col, end_col, walked / length)
+            pygame.draw.line(surface, col, b_points[i], b_points[i + 1], 3)
+#        pygame.draw.lines(surface, colour_linear_interpolation(), False, b_points, 3)

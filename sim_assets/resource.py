@@ -1,6 +1,6 @@
 import pygame
 class Resource:
-    def __init__(self, name, colour, dims=(5, 5)):
+    def __init__(self, name, colour, dims=(8, 8)):
         self._name = name
         self._colour = colour
         self._dims = dims

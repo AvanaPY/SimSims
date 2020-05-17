@@ -1,13 +1,17 @@
 class UI:
     def __init__(self):
         self._buttons = []
+        self._panels = []
 
     def __iter__(self):
-        return self.Iterator(self._buttons)
+        return self.Iterator(self._buttons + self._panels)
 
     @property
     def buttons(self):
         return self.Iterator(self._buttons)
+
+    def add_panel(self, panel):
+        self._panels.append(panel)
 
     def add_button(self, btn):
         """

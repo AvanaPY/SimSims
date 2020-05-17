@@ -109,6 +109,18 @@ class Place:
         if not place in self._outgoing_connections:
             self._outgoing_connections.append(place)
 
+    def disconnect_place(self, place):
+        if place in self._ingoing_connections:
+            self._ingoing_connections.remove(place)
+            place.disconnect_place(self)
+        if place in self._outgoing_connections:
+            self._outgoing_connections.remove(place)
+            place.disconnect_place(self)
+
+    def disconnect_all_connections(self):
+        for place in self._ingoing_connections[:] + self._outgoing_connections[:]:
+            place.disconnect_place(self)
+
     def insert(self, r: Resource):
         """
             Inserts an object, it's a virtual method. Returns True of False depending on if it could insert the object or not.
@@ -122,7 +134,7 @@ class Place:
 #       NODES
 ####################
 class Node(Place):
-    def __init__(self, name, uses, produces, dims=(60, 60), background=(255, 255, 255), border=(0, 0, 0)):
+    def __init__(self, name, uses, produces, dims=(90, 90), background=(255, 255, 255), border=(0, 0, 0)):
         super().__init__(name, uses, produces)
         self._dims = dims
         self._background = background
@@ -178,7 +190,7 @@ class Node(Place):
                 self._resources.remove(r)
                 return True
         return False
-        
+
 class Factory(Node):
     def __init__(self):
         super().__init__('Factory', (Worker,), (Worker, Product,))
@@ -314,26 +326,26 @@ class Flat(Node):
 class Diner(Node):
     def __init__(self):
         super().__init__('Diner', (Worker, Food), (Worker, ))
-        self._viability_increase = 0.1
+        self._max_viability_increase = 0.3
+        self._min_viability_increase = 0.1
+        self._food_poison_chance = 0.2
+        self._food_poison_factor = -0.2
 
+    @property
+    def viability(self):
+        return (self._food_poison_factor if random.random() < self._food_poison_chance else 1) * random.uniform(self._min_viability_increase, self._max_viability_increase)
     def use_resources(self, delay=1):
         self._working = True
 
-        fed_workers = 0
-
         time.sleep(delay/2)
-        workers = [r for r in self._resources if type(r) == Worker]
-        food_count = min(self._count_resources((Food, Worker)))
-        feed_index = 0
-        for resource in self._resources[:]:  # Copy the list to avoid issues
-            t = type(resource)
-            if t == Food:
-                if feed_index < food_count:
-                    workers[feed_index].add_viability(self._viability_increase)
-                    self._resources.remove(resource)
-                    feed_index += 1
-            elif t == Worker:
-                self.deliver_resource(resource)
+        worker = [r for r in self._resources if type(r) == Worker][0]
+        food = [r for r in self._resources if type(r) == Food][0]
+
+        self._resources.remove(food)
+        if worker.add_viability(self.viability):
+            self._resources.remove(worker)
+        else:
+            self.deliver_resource(worker)
 
         time.sleep(delay/2)
         self._working = False
@@ -361,7 +373,7 @@ class Diner(Node):
 #    CONTAINERS
 ###################
 class Container(Place):
-    def __init__(self, name, uses, produces, radius=40, background=(255, 255, 255), border=(0, 0, 0)):
+    def __init__(self, name, uses, produces, radius=60, background=(255, 255, 255), border=(0, 0, 0)):
         super().__init__(name, uses, produces)
         self._radius = radius
         self._dims = (round(radius*2.1), round(radius*2.1))
@@ -369,6 +381,7 @@ class Container(Place):
         self._border = border
         self._uses = uses
         self._produces = produces
+        self._thread_lock = threading.Lock()
                 
     def dims(self):
         return self._dims
@@ -410,11 +423,12 @@ class Container(Place):
         return True
 
     def place_resource(self, node: Node):
-        for resource in self._resources:
-            if node.insert(resource):
-                self._resources.remove(resource)
-                return True
-        return False
+        with self._thread_lock:
+            for resource in self._resources:
+                if node.insert(resource):
+                    self._resources.remove(resource)
+                    return True
+            return False
 
 class Magazine(Container):
     def __init__(self):
@@ -438,12 +452,15 @@ class Barn(Container):
 class Road(Container):
     def __init__(self):
         super().__init__('Road', (Worker,), (Worker,))
+        self._viability_reduction_per_worker = 0.05
 
-    def reduce_viability(self, worker):
-        pass
+    @property
+    def viability(self):
+        return self._viability_reduction_per_worker * len(self._resources)
 
     def insert(self, r: Resource):
         if isinstance(r, Worker):
-            self._resources.append(r)
+            if not r.damage(self.viability):
+                self._resources.append(r)
             return True
         return False

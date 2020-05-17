@@ -5,3 +5,7 @@ from .places import Barn, Diner, Factory, Field, Flat, Magazine, Road, Container
 from .resource import Worker, Food, Product
 
 from .simsims import SimsSims
+
+from .ext import ncr, bernstein_poly, colour_linear_interpolation
+
+from .keybindings import bindings
