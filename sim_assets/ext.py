@@ -37,3 +37,6 @@ def colour_linear_interpolation(col_a, col_b, t):
     """
     col = tuple([a + (b - a) * t for a, b in zip(col_a, col_b)])
     return col
+
+def map_from_to(x, a, b, c, d):
+   return (x - a) / (b - a) * (d - c) + c

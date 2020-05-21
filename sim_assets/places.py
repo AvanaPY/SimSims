@@ -1,5 +1,6 @@
 import pygame
 from .resource import Resource, Food, Product, Worker
+from .ext import map_from_to
 import math
 import time
 import threading
@@ -217,7 +218,7 @@ class Node(Place):
     def update(self):
         if not self._working:
             if self.get_resources():
-                thread = threading.Thread(target=self.use_resources, args=(0.1, ))
+                thread = threading.Thread(target=self.use_resources, args=(1, ))
                 thread.setDaemon(True)
                 thread.start()
 
@@ -241,10 +242,12 @@ class Factory(Node):
     def random_accident(self):
         return random.random() < self.CHANCE_OF_ACCIDENT
 
-    def use_resources(self, delay=2):
+    def use_resources(self, delay=1):
         self._working = True
 
-        time.sleep(delay/3)
+        worker = self._resources[0]
+        viability_penalty = map_from_to(worker.viability, 0, 1, 4, 1)
+        time.sleep(delay/3 * worker.viability)
         for r in self._resources[:]:
             if type(r) == Worker:
                 self._resources.append(Product())
@@ -286,12 +289,15 @@ class Field(Node):
 
     def use_resources(self, delay=1):
         self._working = True
-        time.sleep(delay/3)
+        
+        worker = self._resources[0]
+        viability_penalty = map_from_to(worker.viability, 0, 1, 4, 1)
+        time.sleep(delay/3 * worker.viability)
         for r in self._resources[:]:
             if type(r) == Worker:
                 self._resources.append(Food())
-        time.sleep(delay/3)
 
+        time.sleep(delay/3)
         for resource in self._resources[:]:  # Copy the list to avoid issues
             t = type(resource)
             if t == Food:

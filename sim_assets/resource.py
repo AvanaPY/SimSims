@@ -22,18 +22,22 @@ class Worker(Resource):
     def __init__(self):
         super().__init__('Worker', (0, 0, 0))
         self._viability = 1
-
+    @property
+    def viability(self):
+        return self._viability
     def restore_viability(self, viability=1):
         """
             Restores the worker's viability to a value. Might become useful?
         """
-        self._viability = viability
+        self._viability = min(1, viability)
 
     def add_viability(self, viability):
         """
             Adds a value to the worker's viability.
         """
         self._viability += viability
+        if self._viability > 1:
+            self._viability = 1
 
     def damage(self, viability):
         """
