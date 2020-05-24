@@ -1,16 +1,32 @@
 import pygame
 import math
 from .ext import compute_bezier_points, colour_linear_interpolation
+from .places import Place, Magazine, Barn, Road, Diner, Factory, Field, Flat
 class Map:
     def __init__(self):
         self._places = []
         self._selected_build_type = None        # Which type to build
         self._selected_resource_type = None     # Which resource to place 
-        self._selected_place = None             # Which place is currently selected
+        self._selected_place = None  # Which place is currently selected
+        
+        self._selected_previews = {}
+        for buildable in (Magazine, Barn, Road, Diner, Factory, Field, Flat):
+            b = buildable(set_index=False)
+            blit = b.blit()
+            blit.fill((0, 180, 220, 100), special_flags=pygame.BLEND_RGBA_MULT)
+            self._selected_previews[buildable] = (blit, b.name)
 
     @property
     def places(self):
         return self._places
+
+    def _wait_threads(self):
+        """
+            Waits for any places that aren't finished with their current transition to finish the transition.
+        """
+        for place in self._places:
+            while place.working:
+                pass
 
     def select_build_type(self, t):
         """
@@ -102,10 +118,8 @@ class Map:
             Returns a (blit, name) preview pair of the selected object. Returns (None, "") if no building is selected.
         """
         if self._selected_build_type:
-            t = self._selected_build_type()
-            blit = t.blit()
-            blit.fill((0, 180, 220, 100), special_flags=pygame.BLEND_RGBA_MULT)
-            return blit, t.name
+            blit, name = self._selected_previews[self._selected_build_type]
+            return blit, name
         return None, ''
 
     def blit(self, dims, text_font: pygame.font.Font):
@@ -131,7 +145,6 @@ class Map:
                 blit.blit(txt_blit, (x, y))
                 surface.blit(blit, place.position)
 
-
         return surface
 
     def _draw_bezier(self, surface, pos1, pos2, bend_factor=0.2):
@@ -151,3 +164,30 @@ class Map:
             walked += math.dist(b_points[i], b_points[i + 1])
             col = colour_linear_interpolation(start_col, end_col, walked / length)
             pygame.draw.line(surface, col, b_points[i], b_points[i + 1], 3)
+
+    def json(self):
+        """
+            Returns a json object representing the map.
+        """
+        for i, p in enumerate(self._places):
+            p.set_index(i)
+        places = []
+        for place in self._places:
+            p_json = place.json()
+            p_json = {k.replace('_',''):v for k, v in p_json.items()}
+            places.append(p_json)
+        return places
+        
+    def load_json(self, json):
+        self._places.clear()
+        index_map = {}
+        for place_json in json:
+            place = Place.from_json(place_json)
+            self._places.append(place)
+            index_map[place_json['index']] = place
+
+        for place_json in json:
+            place = index_map[place_json['index']]
+            for index in place_json['out']:
+                p = index_map[index]
+                place.connect_place(p)

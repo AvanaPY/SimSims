@@ -8,6 +8,8 @@ pygame.init()
 pygame.display.set_caption(APPLICATION_NAME)
 
 import threading
+import json
+
 
 from sim_assets import bindings as keybindings
 from ui_assets import UI, Panel, Button
@@ -16,7 +18,7 @@ from sim_assets import Worker, Food, Product
 from sim_assets import Map
 
 class SimsSims:
-    def __init__(self, dims, framerate=60):
+    def __init__(self, dims, *args, **kwargs):
         self._dims = dims
         self._window = pygame.display.set_mode(dims)
 
@@ -26,8 +28,10 @@ class SimsSims:
 
         self._running = False
 
-        self._framerate = framerate
+        self._framerate = kwargs.get('framerate', 60)
         self._clock = pygame.time.Clock()
+
+        self._save_dir = kwargs.get('save_dir', './')
 
         ############################################################
         # The graphical user interface
@@ -36,7 +40,12 @@ class SimsSims:
         self._start_button = Button('Start Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.start_simulation(),
                                     background_colour=(200, 0, 0), padx=25, pady=10)
         self._ui.add_button(self._start_button)
-
+        
+        self._pause_button = Button('Pause Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.pause_simulation(),
+                                    background_colour=(200, 0, 0), padx=25, pady=10)
+        self._pause_button.hide()
+        self._ui.add_button(self._pause_button)
+        ## KEYBINDS
         self._show_keybind_panel = False
         self._toggle_keybindings_button = Button('Show Keybindigs', self._mid_font, (5, 5), (100, 20), func=self._toggle_keybindings_panel,
                                                 background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), padx=25, centered=False)
@@ -51,12 +60,22 @@ class SimsSims:
         self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DESELECT)} - Remove selection (Mouse Over)', self._mid_font)
         self._keybind_panel.hide()
 
+        ## Saving and loading
+
+        w, h = 100, 20
+        self._save_button = Button('Save', self._mid_font, (dims[0] - w - 5, 5), (w, h), func=lambda: self._save(),
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False)
+        self._load_button = Button('Load', self._mid_font, (dims[0] - w - 5, h + 10), (w, h), func=lambda:self._toggle_load_menu(),
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False)
+        self._ui.add_button(self._save_button)
+        self._ui.add_button(self._load_button)
+
         selections = (Magazine, Barn, Road, Factory, Field, Flat, Diner)
 
         select_btn_width  = self._dims[0] / len(selections)
         select_btn_height = 30
         for i, t in enumerate(selections):
-            place = t()
+            place = t(set_index=False)
             key = getattr(keybindings, f'SELECT_TYPE_{place.name.upper()}')
             btn = Button(f'{place.name} ({keybindings.name_of_key(key)})', self._main_font,
                     ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 0.75), (select_btn_width, select_btn_height),
@@ -108,9 +127,24 @@ class SimsSims:
         """
             Starts the simulation.
         """
-        self._start_button.hide()
         self._started_sim = True
-        
+        self._start_button.hide()
+        self._pause_button.unhide()
+
+    def pause_simulation(self):
+        self._started_sim = False
+        self._wait_threads()
+        self._start_button.unhide()
+        self._pause_button.hide()
+    
+    def _wait_threads(self):
+        """
+            Wrapper for Map._wait_threads:
+
+                It waits for any threads to finish before continuing.
+        """
+        self._map._wait_threads()
+    
     def _toggle_keybindings_panel(self):
         self._show_keybind_panel = not self._show_keybind_panel
         if self._show_keybind_panel:
@@ -205,3 +239,24 @@ class SimsSims:
             if not ui_element.hidden:
                 self._window.blit(ui_element.blit, ui_element.position)
         pygame.display.flip()
+
+    # Loading and saving
+
+    def _toggle_load_menu(self):
+        self._load('test.json')
+
+    def _load(self, item):
+        with open(f'{self._save_dir}/{item}', 'rb') as f:
+            obj = json.loads(f.read())
+            self._map.load_json(obj)
+
+    def _save(self):
+        state = self._started_sim
+        
+        self.pause_simulation()
+        self._wait_threads()
+        map_json = self._map.json()
+        with open(f'{self._save_dir}/test.json', 'w') as f:
+            obj = json.dump(map_json, f)
+
+        self._started_sim = state

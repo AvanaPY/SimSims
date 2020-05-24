@@ -7,22 +7,46 @@ import threading
 import random
 
 class Place:
-    def __init__(self, name, uses, produces):
+    PLACE_COUNTER = 0
+    def __init__(self, name, uses, produces, *args, **kwargs):
         self._name = name
         self._resources = []
         self._ingoing_connections = []
         self._outgoing_connections = []
-        self._position = (0, 0)
+        self._position = kwargs.get('position', (0, 0))
         self._working = False
         self._uses = uses
         self._produces = produces
+
+        if kwargs.get('index', 0):
+            self._index = kwargs.get('index')
+        elif kwargs.get('set_index', True):
+            self._index = Place.PLACE_COUNTER
+            Place.PLACE_COUNTER += 1
+        else:
+            self._index = -1
+
+        # Graphics
+        self._background = kwargs.get('background', (255, 255, 255))
+        self._border = kwargs.get('border', (0, 0, 0))
+        self._dims = kwargs.get('dims', (90, 90))
+
     @property
     def name(self):
         return self._name
     @property
     def position(self):
         return self._position
+    @property
+    def index(self):
+        return self._index
+    @property
+    def working(self):
+        return self._working
 
+    def set_index(self, i):
+        self._index = i
+    
     def uses(self, t):
         """
             Returns a boolean if this place uses a type.
@@ -165,15 +189,34 @@ class Place:
         """
         pass
 
+    def json(self):
+        index_in_connections = [c.index for c in self._ingoing_connections]
+        index_ou_connections = [c.index for c in self._outgoing_connections]
+        resource_count = [r.json() for r in self._resources]
+        json = {
+            'type': self.__class__.__name__,
+            'in': index_in_connections,
+            'out': index_ou_connections,
+            'resources': resource_count
+        }
+        _dict = self.__dict__.copy()
+        for k in ('_ingoing_connections', '_outgoing_connections', '_resources', '_thread_lock', '_produces', '_uses', '_name'):
+            _dict.pop(k, None)
+        json = {**json, **_dict}  # Merges the two dictionaries
+        return json
+
+    @staticmethod
+    def from_json(json):
+        place = CLASS_NAME_MAP_DICT[json['type']](**json)
+        for r_json in json['resources']:
+            place.insert(Resource.from_json(r_json))
+        return place
 ####################
 #       NODES
 ####################
 class Node(Place):
-    def __init__(self, name, uses, produces, dims=(90, 90), background=(255, 255, 255), border=(0, 0, 0)):
-        super().__init__(name, uses, produces)
-        self._dims = dims
-        self._background = background
-        self._border = border
+    def __init__(self, name, uses, produces, *args, **kwargs):
+        super().__init__(name, uses, produces, *args, **kwargs)
 
     def blit(self):
         # Create a surface
@@ -236,8 +279,8 @@ class Node(Place):
 class Factory(Node):
     VIABILITY_DIFF = 0.1
     CHANCE_OF_ACCIDENT = 0.05
-    def __init__(self):
-        super().__init__('Factory', (Worker,), (Worker, Product,))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Factory', (Worker,), (Worker, Product,), *args, **kwargs)
 
     def random_accident(self):
         return random.random() < self.CHANCE_OF_ACCIDENT
@@ -246,7 +289,7 @@ class Factory(Node):
         self._working = True
 
         worker = self._resources[0]
-        viability_penalty = map_from_to(worker.viability, 0, 1, 4, 1)
+        viability_penalty = map_from_to(worker.viability, 0, 1, 2, 1)
         time.sleep(delay/3 * worker.viability)
         for r in self._resources[:]:
             if type(r) == Worker:
@@ -281,8 +324,8 @@ class Factory(Node):
 
 class Field(Node):
     CHANCE_OF_ACCIDENT = 0.05
-    def __init__(self):
-        super().__init__('Field', (Worker,), (Worker, Food,))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Field', (Worker,), (Worker, Food,), *args, **kwargs)
 
     def random_accident(self):
         return random.random() < self.CHANCE_OF_ACCIDENT
@@ -291,7 +334,7 @@ class Field(Node):
         self._working = True
         
         worker = self._resources[0]
-        viability_penalty = map_from_to(worker.viability, 0, 1, 4, 1)
+        viability_penalty = map_from_to(worker.viability, 0, 1, 2, 1)
         time.sleep(delay/3 * worker.viability)
         for r in self._resources[:]:
             if type(r) == Worker:
@@ -326,8 +369,8 @@ class Field(Node):
 
 class Flat(Node):
     VIABILITY_INCREASE = 0.1
-    def __init__(self):
-        super().__init__('Flat', (Worker, Product), (Worker, ))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Flat', (Worker, Product), (Worker, ), *args, **kwargs)
 
     def use_resources(self, delay=1):
         self._working = True
@@ -376,8 +419,8 @@ class Diner(Node):
     MIN_VIABILITY_INCREASE = 0.1
     FOOD_POISON_CHANCE = 0.2
     FOOD_POISON_FACTOR = -0.2
-    def __init__(self):
-        super().__init__('Diner', (Worker, Food), (Worker, ))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Diner', (Worker, Food), (Worker, ), *args, **kwargs)
 
     @property
     def viability(self):
@@ -422,14 +465,10 @@ class Diner(Node):
 #    CONTAINERS
 ###################
 class Container(Place):
-    def __init__(self, name, uses, produces, radius=60, background=(255, 255, 255), border=(0, 0, 0)):
-        super().__init__(name, uses, produces)
-        self._radius = radius
-        self._dims = (round(radius*2.1), round(radius*2.1))
-        self._background = background
-        self._border = border
-        self._uses = uses
-        self._produces = produces
+    def __init__(self, name, uses, produces, *args, **kwargs):
+        self._radius = kwargs.get('radius', 60)
+        kwargs['dims'] = (round(self._radius * 2.1), round(self._radius * 2.1))
+        super().__init__(name, uses, produces, *args, **kwargs)
         self._thread_lock = threading.Lock()
                 
     def dims(self):
@@ -501,8 +540,8 @@ class Container(Place):
             return False
 
 class Magazine(Container):
-    def __init__(self):
-        super().__init__('Magazine', (Product,), (Product,))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Magazine', (Product,), (Product,), *args, **kwargs)
 
     def insert(self, r: Resource):
         if isinstance(r, Product):
@@ -511,8 +550,8 @@ class Magazine(Container):
         return False
 
 class Barn(Container):
-    def __init__(self):
-        super().__init__('Barn', (Food, ), (Food, ))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Barn', (Food, ), (Food, ), *args, **kwargs)
 
     def insert(self, r: Resource):
         if isinstance(r, Food):
@@ -521,8 +560,8 @@ class Barn(Container):
         return False
 
 class Road(Container):
-    def __init__(self):
-        super().__init__('Road', (Worker,), (Worker,))
+    def __init__(self, *args, **kwargs):
+        super().__init__('Road', (Worker,), (Worker,), *args, **kwargs)
         self._viability_reduction_per_worker = 0.05
 
     @property
@@ -535,3 +574,5 @@ class Road(Container):
                 self._resources.append(r)
             return True
         return False
+
+CLASS_NAME_MAP_DICT = {v.__name__: v for v in (Node.__subclasses__() + Container.__subclasses__())}

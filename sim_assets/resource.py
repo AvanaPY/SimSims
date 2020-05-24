@@ -1,9 +1,9 @@
 import pygame
 class Resource:
-    def __init__(self, name, colour, dims=(8, 8)):
-        self._name = name
-        self._colour = colour
-        self._dims = dims
+    def __init__(self, *args, **kwargs):
+        self._name = kwargs.get('name', 'Resource')
+        self._colour = kwargs.get('colour', (0, 0, 0))
+        self._dims = kwargs.get('dims', (8, 8))
     @property
     def name(self):
         return self._name
@@ -15,13 +15,31 @@ class Resource:
         surface.fill(self._colour)
         return surface
 
+    def json(self):
+        json = {
+            'type':self.__class__.__name__
+        }
+        json = {**json, **self.__dict__}
+        json = {k.replace('_', ''): v for k, v in json.items()}
+        for k in ('name', 'colour', 'dims'):
+            json.pop(k, None)
+        return json
+
+    @staticmethod
+    def from_json(json):
+        type_map = {v.__name__:v for v in Resource.__subclasses__()}
+        t = type_map[json['type']](**json)
+        return t
+
 class Worker(Resource):
     """
         Worker class, indicated with the colour black.
     """
-    def __init__(self):
-        super().__init__('Worker', (0, 0, 0))
-        self._viability = 1
+    def __init__(self, *args, **kwargs):
+        kwargs['colour'] = 0, 0, 0
+        kwargs['name'] = self.__class__.__name__
+        super().__init__(*args, **kwargs)
+        self._viability = kwargs.get('viability', 1)
     @property
     def viability(self):
         return self._viability
@@ -50,12 +68,16 @@ class Food(Resource):
     """
         Food class, indicated with the colour Green.
     """
-    def __init__(self):
-        super().__init__('Food', (0, 255, 0))
+    def __init__(self, *args, **kwargs):
+        kwargs['colour'] = 0, 255, 0
+        kwargs['name'] = self.__class__.__name__
+        super().__init__(*args, **kwargs)
 
 class Product(Resource):
     """
         Product class, indicated with the colour Red.
     """
-    def __init__(self):
-        super().__init__('Product', (255, 0, 0))
+    def __init__(self, *args, **kwargs):
+        kwargs['colour'] = 255, 0, 0
+        kwargs['name'] = self.__class__.__name__
+        super().__init__(*args, **kwargs)
