@@ -1,7 +1,8 @@
 import sys
 import pygame
+import os
 
-APPLICATION_NAME = 'SimsSims'
+APPLICATION_NAME = 'SimSims'
 BACKGROUND_COLOUR = (255, 255, 255)
 
 pygame.init()
@@ -10,14 +11,13 @@ pygame.display.set_caption(APPLICATION_NAME)
 import threading
 import json
 
-
 from sim_assets import bindings as keybindings
 from ui_assets import UI, Panel, Button
 from sim_assets import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
 from sim_assets import Worker, Food, Product
 from sim_assets import Map
 
-class SimsSims:
+class SimSims:
     def __init__(self, dims, *args, **kwargs):
         self._dims = dims
         self._window = pygame.display.set_mode(dims)
@@ -70,6 +70,15 @@ class SimsSims:
         self._ui.add_button(self._save_button)
         self._ui.add_button(self._load_button)
 
+        w, h = 200, dims[1] - self._save_button.dims[1] - self._load_button.dims[1] - 20
+        self._load_panel = Panel((dims[0] - w, dims[1] - h), (w, h), expand=False)
+
+        h = 20
+        self._load_panel.hide()
+        self._ui.add_panel(self._load_panel)
+        self._update_load_panel()
+        self._show_load_panel = False
+
         selections = (Magazine, Barn, Road, Factory, Field, Flat, Diner)
 
         select_btn_width  = self._dims[0] / len(selections)
@@ -111,10 +120,9 @@ class SimsSims:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE): self.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    x, y = event.pos
-                    self.mouse_down(x, y, event.button)
+                    self.handle_input(*event.pos, event.button)
                 if event.type == pygame.KEYDOWN:
-                    self.handle_keyboard_input(*pygame.mouse.get_pos(), event.key)
+                    self.handle_input(*pygame.mouse.get_pos(), event.key)
 
             if self._started_sim:
                 for node in self._map.places:
@@ -166,14 +174,18 @@ class SimsSims:
         """
         self._map.select_resource_type(r)
 
-    def mouse_down(self, mouse_x, mouse_y, button):
+    def handle_input(self, mouse_x, mouse_y, button):
         """
-            Handles the mouse down event.
+            Handles keyboard input.
         """
-        if button == keybindings.INTERACT:
+        if button == keybindings.DISCONNECT_PLACE_CONNECTIONS:
+            self.disconnect_connection(mouse_x, mouse_y)
+        elif button == keybindings.DELETE_PLACE:
+            self.delete_place_at(mouse_x, mouse_y)
+        elif button == keybindings.INTERACT:
             btn = None
             for button in self._ui.buttons:
-                if button.point_in_button(mouse_x, mouse_y):
+                if button.point(mouse_x, mouse_y):
                     btn = button
             if btn:
                 btn.call()
@@ -184,15 +196,6 @@ class SimsSims:
                     self._map.select_building_at(mouse_x, mouse_y)
         elif button == keybindings.DESELECT:
             self._map.deselect_selections()
-
-    def handle_keyboard_input(self, mouse_x, mouse_y, button):
-        """
-            Handles keyboard input.
-        """
-        if button == keybindings.DISCONNECT_PLACE_CONNECTIONS:
-            self.disconnect_connection(mouse_x, mouse_y)
-        elif button == keybindings.DELETE_PLACE:
-            self.delete_place_at(mouse_x, mouse_y)
         else:
             for btn in self._ui.buttons:
                 if btn.keybinding == button:
@@ -243,7 +246,12 @@ class SimsSims:
     # Loading and saving
 
     def _toggle_load_menu(self):
-        self._load('test.json')
+        if self._show_load_panel:
+            self._load_panel.hide()
+            self._show_load_panel = False
+        else:
+            self._load_panel.unhide()
+            self._show_load_panel = True
 
     def _load(self, item):
         with open(f'{self._save_dir}/{item}', 'rb') as f:
@@ -252,11 +260,24 @@ class SimsSims:
 
     def _save(self):
         state = self._started_sim
-        
+
         self.pause_simulation()
         self._wait_threads()
+
+        index = 0
+        base_name = 'simsims'
+        existing_files = [os.path.splitext(l)[0] for l in os.listdir(self._save_dir)]
+        while f'{base_name}_{index}' in existing_files:
+            index += 1
+        name = f'{base_name}_{index}'
         map_json = self._map.json()
-        with open(f'{self._save_dir}/test.json', 'w') as f:
+        with open(f'{self._save_dir}/{name}.json', 'w') as f:
             obj = json.dump(map_json, f)
 
+        self._update_load_panel()
         self._started_sim = state
+
+    def _update_load_panel(self, content_height=20):
+        self._load_panel.clear()
+        for l in os.listdir(self._save_dir):
+            self._load_panel.add_button(text=l, font=self._mid_font, dims=(self._load_panel.dims[0], content_height), func=lambda:self._load(l))

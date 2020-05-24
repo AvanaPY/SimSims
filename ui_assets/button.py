@@ -5,18 +5,16 @@ class Button:
         A button
     """
     def __init__(self, text: str, font: pygame.font.Font,
-                position: tuple, dims: tuple, func, args: list = None, keybinding=None,
+                position: tuple, dims: tuple, func, arg: list = None, keybinding=None,
                 text_aa=True, text_colour: tuple = (255, 255, 255),
                 background_colour: tuple = (40, 40, 40), border_colour: tuple = (0, 0, 0), border_width: int = 1,
-                expand: bool = True, padx: int = 0, pady: int = 0, centered: bool = True):
+                expand: bool = True, padx: int = 0, pady: int = 0, centered: bool = True, *args, **kwargs):
         self._text = text
-        self._position = position
         self._func = func
-        self._args = args
+        self._args = arg
         # Create the text blit of the button
         txt_blit = font.render(text, text_aa, text_colour)
         txt_dims = (txt_blit.get_width(), txt_blit.get_height())
-
 
         # IF we want to expand, check if the text is bigger than the given dimensions
         if not expand:
@@ -56,6 +54,10 @@ class Button:
     def keybinding(self):
         return self._keybinding
 
+    @property
+    def dims(self):
+        return self._dims
+
     def move(self, dx, dy):
         """
             Moves the button in both axis.
@@ -73,7 +75,7 @@ class Button:
         """
         self._hidden = False
 
-    def point_in_button(self, x, y):
+    def point(self, x, y):
         """
             Returns a boolean if a point (x, y) is contained inside the button, useful for checking if it's about to be clicked.
         """

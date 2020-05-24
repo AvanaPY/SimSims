@@ -8,7 +8,7 @@ class Keybindings:
         self.INTERACT = pygame.BUTTON_LEFT
         self.DESELECT = pygame.BUTTON_RIGHT
         self.DISCONNECT_PLACE_CONNECTIONS = pygame.K_x
-        self.DELETE_PLACE = pygame.K_v
+        self.DELETE_PLACE = pygame.BUTTON_MIDDLE
 
         self.SELECT_TYPE_MAGAZINE = pygame.K_1
         self.SELECT_TYPE_BARN     = pygame.K_2

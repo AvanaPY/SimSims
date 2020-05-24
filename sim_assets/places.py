@@ -217,6 +217,12 @@ class Place:
 class Node(Place):
     def __init__(self, name, uses, produces, *args, **kwargs):
         super().__init__(name, uses, produces, *args, **kwargs)
+        self._has_waiting_resources = kwargs.get('haswaitingresources', False)
+        self._next_available = kwargs.get('nextavailable', 0)
+
+    @property
+    def waiting_resources(self):
+        return self._has_waiting_resources
 
     def blit(self):
         # Create a surface
@@ -259,7 +265,7 @@ class Node(Place):
         return self._dims
 
     def update(self):
-        if not self._working:
+        if not self._working and not self._has_waiting_resources and self._next_available - time.time() < 0:
             if self.get_resources():
                 thread = threading.Thread(target=self.use_resources, args=(1, ))
                 thread.setDaemon(True)
@@ -269,15 +275,20 @@ class Node(Place):
         return False
     def use_resources(self, delay=1):
         pass
-    def deliver_resource(self, r):
-        for place in self._outgoing_connections:
-            if place.uses(type(r)) and place.insert(r):
-                self._resources.remove(r)
-                return True
-        return False
+    def give_resources(self, container):
+        """
+            If this Node has any resources waiting to be delivered, it will give any resources it can to the container. If a resource can't be given it will simply skip to the next one.
+        """
+        if self._has_waiting_resources:
+            for resource in self._resources[:]:
+                if container.uses(type(resource)):
+                    container.insert(resource)
+                    self._resources.remove(resource)
+            self._has_waiting_resources = len(self._resources) != 0
+            self._next_available = time.time() + 0.2
 
 class Factory(Node):
-    VIABILITY_DIFF = 0.1
+    WORKER_DAMAGE = 0.1
     CHANCE_OF_ACCIDENT = 0.05
     def __init__(self, *args, **kwargs):
         super().__init__('Factory', (Worker,), (Worker, Product,), *args, **kwargs)
@@ -290,24 +301,16 @@ class Factory(Node):
 
         worker = self._resources[0]
         viability_penalty = map_from_to(worker.viability, 0, 1, 2, 1)
-        time.sleep(delay/3 * worker.viability)
+        time.sleep(delay/2 * viability_penalty)
         for r in self._resources[:]:
             if type(r) == Worker:
                 self._resources.append(Product())
+                if self.random_accident() or r.damage(self.WORKER_DAMAGE):
+                    self._resources.remove(r)
 
-        time.sleep(delay/3)
-        for resource in self._resources[:]:  # Copy the list to avoid issues
-            t = type(resource)
-            if t == Product:
-                self.deliver_resource(resource)
-            elif t == Worker:
-                if self.random_accident() or resource.damage(self.VIABILITY_DIFF):
-                    self._resources.remove(resource)
-                else:
-                    self.deliver_resource(resource)
-
-        time.sleep(delay/3)
+        time.sleep(delay/2)
         self._working = False
+        self._has_waiting_resources = True
 
     def get_resources(self):
         if len(self._resources) == 0:
@@ -335,24 +338,16 @@ class Field(Node):
         
         worker = self._resources[0]
         viability_penalty = map_from_to(worker.viability, 0, 1, 2, 1)
-        time.sleep(delay/3 * worker.viability)
+        time.sleep(delay/2 * viability_penalty)
         for r in self._resources[:]:
             if type(r) == Worker:
                 self._resources.append(Food())
-
-        time.sleep(delay/3)
-        for resource in self._resources[:]:  # Copy the list to avoid issues
-            t = type(resource)
-            if t == Food:
-                self.deliver_resource(resource)
-            elif t == Worker:
                 if self.random_accident():
-                    self._resources.remove(resource)
-                else:
-                    self.deliver_resource(resource)
+                    self._resources.remove(r)
 
-        time.sleep(delay/3)
+        time.sleep(delay/2)
         self._working = False
+        self._has_waiting_resources = True
 
     def get_resources(self):
         if len(self._resources) == 0:
@@ -368,14 +363,15 @@ class Field(Node):
         return False
 
 class Flat(Node):
-    VIABILITY_INCREASE = 0.1
+    VIABILITY_INCREASE = 0.25
+    CHANCE_OF_TWO_WRKR = 0.4
     def __init__(self, *args, **kwargs):
         super().__init__('Flat', (Worker, Product), (Worker, ), *args, **kwargs)
 
     def use_resources(self, delay=1):
         self._working = True
 
-        time.sleep(delay/3)
+        time.sleep(delay/2)
         workers = self._count_resources(Worker)[0]
         if workers == 2:
             self._resources.append(Worker())
@@ -383,28 +379,25 @@ class Flat(Node):
             for resource in self._resources[:]:
                 if type(resource) == Worker:
                     resource.add_viability(self.VIABILITY_INCREASE)
-        for resource in self._resources:
-            if type(resource) == Product:
-                self._resources.remove(resource)
+        self._resources = [r for r in self._resources if type(r) != Product]
 
-        time.sleep(delay/3)
-        for resource in self._resources[:]:  # Copy the list to avoid issues
-            if type(resource) == Worker:
-                self.deliver_resource(resource)
-
-        time.sleep(delay/3)
+        time.sleep(delay/2)
         self._working = False
+        self._has_waiting_resources = True
 
     def get_resources(self):
         counts = self._count_resources((Product, Worker))
         count_sum = sum(counts)
-        if counts[0] < 1:
+        if counts[0] == 0:
             for place in self._ingoing_connections:
                 if isinstance(place, Magazine) and place.place_resource(self):
                     break
-        if counts[1] < 2:
-            for place in self._ingoing_connections:
-                if isinstance(place, Road) and place.place_resource(self):
+        elif counts[1] == 0:
+            for _ in range(2):
+                for place in self._ingoing_connections:
+                    if isinstance(place, Road) and place.place_resource(self):
+                        break
+                if random.random() > self.CHANCE_OF_TWO_WRKR or self._count_resources(Worker)[0] > 1:
                     break
         return counts[0] == 1 and counts[1] in (1, 2)
 
@@ -415,10 +408,10 @@ class Flat(Node):
         return False
 
 class Diner(Node):
-    MAX_VIABILITY_INCREASE = 0.3
-    MIN_VIABILITY_INCREASE = 0.1
+    MAX_VIABILITY_INCREASE = 0.7
+    MIN_VIABILITY_INCREASE = 0.2
     FOOD_POISON_CHANCE = 0.2
-    FOOD_POISON_FACTOR = -0.2
+    FOOD_POISON_FACTOR = -0.5
     def __init__(self, *args, **kwargs):
         super().__init__('Diner', (Worker, Food), (Worker, ), *args, **kwargs)
 
@@ -436,11 +429,10 @@ class Diner(Node):
         self._resources.remove(food)
         if worker.add_viability(self.viability):
             self._resources.remove(worker)
-        else:
-            self.deliver_resource(worker)
 
         time.sleep(delay/2)
         self._working = False
+        self._has_waiting_resources = True
 
     def get_resources(self):
         counts = self._count_resources((Food, Worker))
@@ -538,6 +530,11 @@ class Container(Place):
                     self._resources.remove(resource)
                     return True
             return False
+            
+    def update(self):
+        for place in self._ingoing_connections:
+            if isinstance(place, Node):
+                place.give_resources(self)
 
 class Magazine(Container):
     def __init__(self, *args, **kwargs):
@@ -548,6 +545,7 @@ class Magazine(Container):
             self._resources.append(r)
             return True
         return False
+
 
 class Barn(Container):
     def __init__(self, *args, **kwargs):
@@ -560,13 +558,13 @@ class Barn(Container):
         return False
 
 class Road(Container):
+    VIABILITY_REDUCTION_PER_WORKER = 0.02
     def __init__(self, *args, **kwargs):
         super().__init__('Road', (Worker,), (Worker,), *args, **kwargs)
-        self._viability_reduction_per_worker = 0.05
 
     @property
     def viability(self):
-        return self._viability_reduction_per_worker * len(self._resources)
+        return self.VIABILITY_REDUCTION_PER_WORKER * len(self._resources)
 
     def insert(self, r: Resource):
         if isinstance(r, Worker):

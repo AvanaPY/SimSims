@@ -1,11 +1,11 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
-from simsims import SimsSims
+from simsims import SimSims
 
 SAVE_DIRECTORY = './saves'
 
 DIMS = (1200, 800)
 
-sims = SimsSims(DIMS, save_dir=SAVE_DIRECTORY)
+sims = SimSims(DIMS, save_dir=SAVE_DIRECTORY)
 sims.start()

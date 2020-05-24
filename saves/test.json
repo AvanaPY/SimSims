@@ -7,32 +7,7 @@
         "out": [
             4
         ],
-        "resources": [
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            },
-            {
-                "type": "Product"
-            }
-        ],
+        "resources": [],
         "radius": 60,
         "position": [
             294,
@@ -64,15 +39,6 @@
             5
         ],
         "resources": [
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            },
             {
                 "type": "Food"
             },
@@ -128,19 +94,35 @@
         "resources": [
             {
                 "type": "Worker",
-                "viability": 0.05597538248399275
+                "viability": 0.8
             },
             {
                 "type": "Worker",
-                "viability": 0.2773959296001927
+                "viability": 0.1799999999999999
             },
             {
                 "type": "Worker",
-                "viability": 0.363096902203197
+                "viability": 0.292507823596286
             },
             {
                 "type": "Worker",
-                "viability": 0.6
+                "viability": 0.66
+            },
+            {
+                "type": "Worker",
+                "viability": 0.2800000000000001
+            },
+            {
+                "type": "Worker",
+                "viability": 0.43308066182737365
+            },
+            {
+                "type": "Worker",
+                "viability": 0.78
+            },
+            {
+                "type": "Worker",
+                "viability": 0.6494248873341024
             }
         ],
         "radius": 60,
@@ -163,8 +145,7 @@
         "dims": [
             126,
             126
-        ],
-        "viabilityreductionperworker": 0.05
+        ]
     },
     {
         "type": "Field",
@@ -175,7 +156,15 @@
             1,
             2
         ],
-        "resources": [],
+        "resources": [
+            {
+                "type": "Worker",
+                "viability": 0.42
+            },
+            {
+                "type": "Food"
+            }
+        ],
         "position": [
             784,
             431
@@ -195,7 +184,9 @@
         "dims": [
             90,
             90
-        ]
+        ],
+        "haswaitingresources": true,
+        "nextavailable": 1590348971.7996633
     },
     {
         "type": "Flat",
@@ -206,7 +197,20 @@
         "out": [
             2
         ],
-        "resources": [],
+        "resources": [
+            {
+                "type": "Worker",
+                "viability": 0.78
+            },
+            {
+                "type": "Worker",
+                "viability": 0.84
+            },
+            {
+                "type": "Worker",
+                "viability": 1
+            }
+        ],
         "position": [
             449,
             95
@@ -226,7 +230,9 @@
         "dims": [
             90,
             90
-        ]
+        ],
+        "haswaitingresources": true,
+        "nextavailable": 1590348971.9216948
     },
     {
         "type": "Diner",
@@ -237,7 +243,12 @@
         "out": [
             2
         ],
-        "resources": [],
+        "resources": [
+            {
+                "type": "Worker",
+                "viability": 0.3626153400628924
+            }
+        ],
         "position": [
             764,
             92
@@ -257,7 +268,9 @@
         "dims": [
             90,
             90
-        ]
+        ],
+        "haswaitingresources": true,
+        "nextavailable": 1590348972.1997669
     },
     {
         "type": "Factory",
@@ -268,7 +281,11 @@
             0,
             2
         ],
-        "resources": [],
+        "resources": [
+            {
+                "type": "Product"
+            }
+        ],
         "position": [
             453,
             432
@@ -288,6 +305,8 @@
         "dims": [
             90,
             90
-        ]
+        ],
+        "haswaitingresources": true,
+        "nextavailable": 1590348972.5228508
     }
 ]

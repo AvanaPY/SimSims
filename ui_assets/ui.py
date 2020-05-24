@@ -8,7 +8,10 @@ class UI:
 
     @property
     def buttons(self):
-        return self.Iterator(self._buttons)
+        btns = [b for b in self._buttons]
+        for panel in self._panels:
+            btns += panel.buttons
+        return self.Iterator(btns)
 
     def add_panel(self, panel):
         """
