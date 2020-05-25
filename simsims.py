@@ -12,7 +12,7 @@ import threading
 import json
 
 from sim_assets import bindings as keybindings
-from ui_assets import UI, Panel, Button
+from sim_assets import UI, Panel, Button
 from sim_assets import Place, Node, Magazine, Barn, Road, Factory, Field, Flat, Diner
 from sim_assets import Worker, Food, Product
 from sim_assets import Map
@@ -24,6 +24,8 @@ class SimSims:
 
         self._main_font = pygame.font.SysFont('Times New Roman', 24)
         self._mid_font = pygame.font.SysFont('Times New Roman', 18)
+        self._keybindings_font = pygame.font.SysFont('Monospace', 18)
+        self._keybindings_font.set_underline(True)
         self._places_name_font = pygame.font.SysFont('Times New Roman', 14)
 
         self._running = False
@@ -38,40 +40,55 @@ class SimSims:
         self._ui: UI = UI()
 
         self._start_button = Button('Start Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.start_simulation(),
-                                    background_colour=(200, 0, 0), padx=25, pady=10)
+                                    background_colour=(200, 0, 0), padx=25, pady=10, keybinding=keybindings.PAUSE_START)
         self._ui.add_button(self._start_button)
         
         self._pause_button = Button('Pause Simulation', self._main_font, (dims[0] / 2, 20), (100, 20), func = lambda: self.pause_simulation(),
-                                    background_colour=(200, 0, 0), padx=25, pady=10)
+                                    background_colour=(200, 0, 0), padx=25, pady=10, keybinding=keybindings.PAUSE_START)
         self._pause_button.hide()
         self._ui.add_button(self._pause_button)
         ## KEYBINDS
         self._show_keybind_panel = False
-        self._toggle_keybindings_button = Button('Show Keybindigs', self._mid_font, (5, 5), (100, 20), func=self._toggle_keybindings_panel,
-                                                background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), padx=25, centered=False)
+        self._toggle_keybindings_button = Button('Show Keybindigs', self._mid_font, (5, 5), (80, 20), func=self._toggle_keybindings_panel,
+                                                background_colour=(200, 200, 200, 200), text_colour=(0, 0, 0), padx=10, centered=False,
+                                                keybinding=keybindings.KEYBINDING_SCREEN)
         self._ui.add_button(self._toggle_keybindings_button)
 
-        self._keybind_panel = Panel((0, 0), (100, dims[1]))
+        self._keybind_panel = Panel((0, 0), (100, dims[1]), background_colour=(230, 230, 230, 230))
         self._ui.add_panel(self._keybind_panel)
 
-        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DISCONNECT_PLACE_CONNECTIONS)} - Disconnect connections (Mouse Over)', self._mid_font)
-        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DELETE_PLACE)} - Delete a place (Mouse Over)', self._mid_font)
-        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.INTERACT)} - Build/Select (Mouse Over)', self._mid_font)
-        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DESELECT)} - Remove selection (Mouse Over)', self._mid_font)
+        text_l_just = 12
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.SAVE).ljust(text_l_just)} - Save'                                          , self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.EXIT).ljust(text_l_just)} - Exit'                                          , self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.LOAD_SCREEN).ljust(text_l_just)} - Toggle load screen', self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.PAUSE_START).ljust(text_l_just)} - Pause / Start'                          , self._keybindings_font)
+        self._keybind_panel.add_text('', self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.INTERACT).ljust(text_l_just)} - Build/Select'                              , self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DESELECT).ljust(text_l_just)} - Remove selection'                          , self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DELETE_PLACE).ljust(text_l_just)} - Delete a place'                        , self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.DISCONNECT_PLACE_CONNECTIONS).ljust(text_l_just)} - Disconnect connections', self._keybindings_font)
+        self._keybind_panel.add_text('', self._keybindings_font)
+        self._keybind_panel.add_text(f'{keybindings.name_of_key(keybindings.KEYBINDING_SCREEN).ljust(text_l_just)} - Show keybindings'                 , self._keybindings_font)
         self._keybind_panel.hide()
 
         ## Saving and loading
 
         w, h = 100, 20
         self._save_button = Button('Save', self._mid_font, (dims[0] - w - 5, 5), (w, h), func=lambda: self._save(),
-                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False)
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False,
+                                    keybinding=keybindings.SAVE)
         self._load_button = Button('Load', self._mid_font, (dims[0] - w - 5, h + 10), (w, h), func=lambda:self._toggle_load_menu(),
-                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False)
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False,
+                                    keybinding=keybindings.LOAD_SCREEN)
+        self._exit_button = Button('Exit', self._mid_font, (dims[0] - w - 5, h * 2 + 15), (w, h), func=lambda:self.exit(),
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False,
+                                    keybinding=keybindings.EXIT)
         self._ui.add_button(self._save_button)
         self._ui.add_button(self._load_button)
+        self._ui.add_button(self._exit_button)
 
-        w, h = 200, dims[1] - self._save_button.dims[1] - self._load_button.dims[1] - 20
-        self._load_panel = Panel((dims[0] - w, dims[1] - h), (w, h), expand=False)
+        w, h = 200, dims[1] - self._save_button.dims[1] - self._load_button.dims[1] - self._exit_button.dims[1] - 20
+        self._load_panel = Panel((dims[0] - w, dims[1] - h ), (w, h), expand=False)
 
         h = 20
         self._load_panel.hide()
@@ -88,7 +105,7 @@ class SimSims:
             key = getattr(keybindings, f'SELECT_TYPE_{place.name.upper()}')
             btn = Button(f'{place.name} ({keybindings.name_of_key(key)})', self._main_font,
                     ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 0.75), (select_btn_width, select_btn_height),
-                    self.map_select_build, args=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0),
+                    self.map_select_build, arg=[t], background_colour=(100, 100, 255), text_colour=(0, 0, 0),
                     keybinding=key)
             self._ui.add_button(btn)
 
@@ -99,7 +116,7 @@ class SimSims:
             key = getattr(keybindings, f'SELECT_TYPE_{resource.name.upper()}')
             btn = Button(f'{resource.name} ({keybindings.name_of_key(key)})', self._main_font,
                     ((i + 0.5) * select_btn_width, self._dims[1] - select_btn_height * 2), (select_btn_width, select_btn_height),
-                    self.map_select_resource, args=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0),
+                    self.map_select_resource, arg=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0),
                     keybinding=key)
             self._ui.add_button(btn)
         
@@ -118,7 +135,7 @@ class SimSims:
             delta_time = self._clock.tick(self._framerate) * 0.001 # Mult by 0.001 to get it in milliseconds
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE): self.exit()
+                if event.type == pygame.QUIT: self.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_input(*event.pos, event.button)
                 if event.type == pygame.KEYDOWN:
@@ -199,7 +216,8 @@ class SimSims:
         else:
             for btn in self._ui.buttons:
                 if btn.keybinding == button:
-                    btn.call()
+                    if btn.call():
+                        return
 
     def disconnect_connection(self, mouse_x, mouse_y):
         """
@@ -280,4 +298,5 @@ class SimSims:
     def _update_load_panel(self, content_height=20):
         self._load_panel.clear()
         for l in os.listdir(self._save_dir):
-            self._load_panel.add_button(text=l, font=self._mid_font, dims=(self._load_panel.dims[0], content_height), func=lambda:self._load(l))
+            name = l
+            self._load_panel.add_button(text=l, font=self._mid_font, dims=(self._load_panel.dims[0], content_height), func=self._load, arg=[l])

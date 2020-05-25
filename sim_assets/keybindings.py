@@ -9,6 +9,12 @@ class Keybindings:
         self.DESELECT = pygame.BUTTON_RIGHT
         self.DISCONNECT_PLACE_CONNECTIONS = pygame.K_x
         self.DELETE_PLACE = pygame.BUTTON_MIDDLE
+        self.PAUSE_START = pygame.K_SPACE
+
+        self.EXIT = pygame.K_ESCAPE
+        self.SAVE = pygame.K_s
+        self.LOAD_SCREEN = pygame.K_l
+        self.KEYBINDING_SCREEN = pygame.K_TAB
 
         self.SELECT_TYPE_MAGAZINE = pygame.K_1
         self.SELECT_TYPE_BARN     = pygame.K_2
@@ -27,7 +33,8 @@ class Keybindings:
         """
         m = {
             pygame.BUTTON_LEFT: 'Mouse Left',
-            pygame.BUTTON_RIGHT: 'Mouse Right'
+            pygame.BUTTON_RIGHT: 'Mouse Right',
+            pygame.BUTTON_MIDDLE: 'Mouse Middle'
         }
         if key in m:
             return m[key]
@@ -37,4 +44,3 @@ bindings = Keybindings()
 
 if __name__ == '__main__':
     pygame.init()
-    print(bindings.name_of_key(pygame.K_v))

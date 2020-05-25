@@ -2,16 +2,16 @@
     {
         "type": "Magazine",
         "in": [
-            6
+            3
         ],
         "out": [
-            4
+            5
         ],
         "resources": [],
         "radius": 60,
         "position": [
-            294,
-            275
+            333,
+            260
         ],
         "working": false,
         "index": 0,
@@ -33,32 +33,16 @@
     {
         "type": "Barn",
         "in": [
-            3
+            4
         ],
         "out": [
-            5
+            6
         ],
-        "resources": [
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            },
-            {
-                "type": "Food"
-            }
-        ],
+        "resources": [],
         "radius": 60,
         "position": [
-            873,
-            258
+            724,
+            259
         ],
         "working": false,
         "index": 1,
@@ -80,55 +64,47 @@
     {
         "type": "Road",
         "in": [
-            3,
+            6,
             4,
-            5,
-            6
+            3,
+            5
         ],
         "out": [
+            5,
             3,
             4,
-            5,
             6
         ],
         "resources": [
+            {
+                "type": "Worker",
+                "viability": 0.6436522302565977
+            },
+            {
+                "type": "Worker",
+                "viability": 0.9
+            },
             {
                 "type": "Worker",
                 "viability": 0.8
             },
             {
                 "type": "Worker",
-                "viability": 0.1799999999999999
+                "viability": 0.7000000000000001
             },
             {
                 "type": "Worker",
-                "viability": 0.292507823596286
+                "viability": 0.5428530715210839
             },
             {
                 "type": "Worker",
-                "viability": 0.66
-            },
-            {
-                "type": "Worker",
-                "viability": 0.2800000000000001
-            },
-            {
-                "type": "Worker",
-                "viability": 0.43308066182737365
-            },
-            {
-                "type": "Worker",
-                "viability": 0.78
-            },
-            {
-                "type": "Worker",
-                "viability": 0.6494248873341024
+                "viability": 0.9
             }
         ],
         "radius": 60,
         "position": [
-            566,
-            257
+            525,
+            262
         ],
         "working": false,
         "index": 2,
@@ -148,26 +124,26 @@
         ]
     },
     {
-        "type": "Field",
+        "type": "Factory",
         "in": [
             2
         ],
         "out": [
-            1,
-            2
+            2,
+            0
         ],
         "resources": [
             {
                 "type": "Worker",
-                "viability": 0.42
+                "viability": 0.78
             },
             {
-                "type": "Food"
+                "type": "Product"
             }
         ],
         "position": [
-            784,
-            431
+            452,
+            420
         ],
         "working": false,
         "index": 3,
@@ -186,15 +162,15 @@
             90
         ],
         "haswaitingresources": true,
-        "nextavailable": 1590348971.7996633
+        "nextavailable": 1590373769.4967117
     },
     {
-        "type": "Flat",
+        "type": "Field",
         "in": [
-            0,
             2
         ],
         "out": [
+            1,
             2
         ],
         "resources": [
@@ -203,17 +179,12 @@
                 "viability": 0.78
             },
             {
-                "type": "Worker",
-                "viability": 0.84
-            },
-            {
-                "type": "Worker",
-                "viability": 1
+                "type": "Food"
             }
         ],
         "position": [
-            449,
-            95
+            649,
+            416
         ],
         "working": false,
         "index": 4,
@@ -232,26 +203,21 @@
             90
         ],
         "haswaitingresources": true,
-        "nextavailable": 1590348971.9216948
+        "nextavailable": 1590373769.4967117
     },
     {
-        "type": "Diner",
+        "type": "Flat",
         "in": [
-            1,
-            2
+            2,
+            0
         ],
         "out": [
             2
         ],
-        "resources": [
-            {
-                "type": "Worker",
-                "viability": 0.3626153400628924
-            }
-        ],
+        "resources": [],
         "position": [
-            764,
-            92
+            453,
+            124
         ],
         "working": false,
         "index": 5,
@@ -269,26 +235,22 @@
             90,
             90
         ],
-        "haswaitingresources": true,
-        "nextavailable": 1590348972.1997669
+        "haswaitingresources": false,
+        "nextavailable": 1590373770.550972
     },
     {
-        "type": "Factory",
+        "type": "Diner",
         "in": [
-            2
+            2,
+            1
         ],
         "out": [
-            0,
             2
         ],
-        "resources": [
-            {
-                "type": "Product"
-            }
-        ],
+        "resources": [],
         "position": [
-            453,
-            432
+            649,
+            121
         ],
         "working": false,
         "index": 6,
@@ -306,7 +268,7 @@
             90,
             90
         ],
-        "haswaitingresources": true,
-        "nextavailable": 1590348972.5228508
+        "haswaitingresources": false,
+        "nextavailable": 1590373770.533968
     }
 ]

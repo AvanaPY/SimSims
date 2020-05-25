@@ -27,7 +27,7 @@ def compute_bezier_points(points, n_times=25):
     t = np.linspace(0.0, 1.0, n_times)
     polynomial_array = np.array([bernstein_poly(i, n_points-1, t) for i in range(0, n_points)])
 
-    x_vals, y_vals= np.dot(x_points, polynomial_array), np.dot(y_points, polynomial_array)
+    x_vals, y_vals = np.dot(x_points, polynomial_array), np.dot(y_points, polynomial_array)
 
     return [(x, y) for x, y in zip(x_vals, y_vals)]
 

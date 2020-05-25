@@ -1,13 +1,19 @@
+
 import pygame
+from .ext import map_from_to, compute_bezier_points, colour_linear_interpolation
 import math
-from .ext import compute_bezier_points, colour_linear_interpolation
-from .places import Place, Magazine, Barn, Road, Diner, Factory, Field, Flat
+import time
+import threading
+import random
+
+from .units import *
+
 class Map:
     def __init__(self):
         self._places = []
         self._selected_build_type = None        # Which type to build
         self._selected_resource_type = None     # Which resource to place 
-        self._selected_place = None  # Which place is currently selected
+        self._selected_place = None             # Which place is currently selected
         
         self._selected_previews = {}
         for buildable in (Magazine, Barn, Road, Diner, Factory, Field, Flat):
