@@ -83,12 +83,16 @@ class SimSims:
         self._exit_button = Button('Exit', self._mid_font, (dims[0] - w - 5, h * 2 + 15), (w, h), func=lambda:self.exit(),
                                     background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False,
                                     keybinding=keybindings.EXIT)
+        self._clear_button = Button('Clear', self._mid_font, (dims[0] - w - 5, h * 3 + 20), (w, h), func=lambda:self._map.clear(),
+                                    background_colour=(40, 40, 40, 100), text_colour=(0, 0, 0), centered=False,
+                                    keybinding=keybindings.EXIT)
         self._ui.add_button(self._save_button)
         self._ui.add_button(self._load_button)
         self._ui.add_button(self._exit_button)
+        self._ui.add_button(self._clear_button)
 
-        w, h = 200, dims[1] - self._save_button.dims[1] - self._load_button.dims[1] - self._exit_button.dims[1] - 20
-        self._load_panel = Panel((dims[0] - w, dims[1] - h ), (w, h), expand=False)
+        w, h = 200, dims[1] - self._save_button.dims[1] - self._load_button.dims[1] - self._exit_button.dims[1] - self._clear_button.dims[1] - 20
+        self._load_panel = Panel((dims[0] - w, dims[1] - h ), (w, h), expand=False, background_colour=(200, 200, 200, 200), content_offset=2, border_width=0)
 
         h = 20
         self._load_panel.hide()
@@ -299,4 +303,5 @@ class SimSims:
         self._load_panel.clear()
         for l in os.listdir(self._save_dir):
             name = l
-            self._load_panel.add_button(text=l, font=self._mid_font, dims=(self._load_panel.dims[0], content_height), func=self._load, arg=[l])
+            self._load_panel.add_button(text=l, font=self._mid_font, dims=(self._load_panel.dims[0], content_height), func=self._load, arg=[l],
+                                        background_colour=(140, 140, 140))

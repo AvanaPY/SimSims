@@ -68,7 +68,8 @@ class Button:
         # Create the final surface and apply the background colour and border
         blit = pygame.Surface(self._dims, pygame.SRCALPHA, 32).convert_alpha()
         blit.fill(background_colour)
-        pygame.draw.rect(blit, border_colour, pygame.Rect(0, 0, self._dims[0], self._dims[1]), border_width)
+        if border_width > 0:
+            pygame.draw.rect(blit, border_colour, pygame.Rect(0, 0, self._dims[0], self._dims[1]), border_width)
 
         # Blit the text to it
         blit.blit(txt_blit, (self._dims[0] / 2 - txt_dims[0] / 2, self._dims[1] / 2 - txt_dims[1] / 2))
@@ -217,7 +218,8 @@ class Panel:
         self._calculate_width()
         self._blit = pygame.Surface(self._dims, pygame.SRCALPHA, 32).convert_alpha()
         self._blit.fill(self._background_colour)
-        pygame.draw.rect(self._blit, self._border_colour, pygame.Rect(0, 0, *self.dims), self._border_width)
+        if self._border_width > 0:
+            pygame.draw.rect(self._blit, self._border_colour, pygame.Rect(0, 0, *self.dims), self._border_width)
 
         for cont in self._content:
             self._blit.blit(cont.blit, cont.pos)

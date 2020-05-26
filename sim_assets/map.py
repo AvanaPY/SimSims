@@ -171,6 +171,8 @@ class Map:
             col = colour_linear_interpolation(start_col, end_col, walked / length)
             pygame.draw.line(surface, col, b_points[i], b_points[i + 1], 3)
 
+    def clear(self):
+        self._places.clear()
     def json(self):
         """
             Returns a json object representing the map.
