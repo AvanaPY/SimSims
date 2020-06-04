@@ -203,6 +203,9 @@ class Panel:
         self._redraw()
 
     def add_button(self, *args, **kwargs):
+        """
+            Adds a button as content.
+        """
         x, y = 0, self.next_y()
         kwargs['position'] = x + self.position[0], y + self.position[1]
         kwargs['centered'] = False
@@ -248,7 +251,11 @@ class Panel:
             Unhides the panel.
         """
         self._hidden = False
+
     def clear(self):
+        """
+            Clears the content of the panel.
+        """
         self._content.clear()
         self._redraw()
 

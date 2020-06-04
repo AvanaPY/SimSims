@@ -172,7 +172,11 @@ class Map:
             pygame.draw.line(surface, col, b_points[i], b_points[i + 1], 3)
 
     def clear(self):
+        """
+            Clears the map.
+        """
         self._places.clear()
+
     def json(self):
         """
             Returns a json object representing the map.
@@ -187,6 +191,9 @@ class Map:
         return places
         
     def load_json(self, json):
+        """
+            Loads a .json object and replaces the map content.
+        """
         self._places.clear()
         index_map = {}
         for place_json in json:

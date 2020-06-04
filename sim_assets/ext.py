@@ -39,4 +39,7 @@ def colour_linear_interpolation(col_a, col_b, t):
     return col
 
 def map_from_to(x, a, b, c, d):
-   return (x - a) / (b - a) * (d - c) + c
+    """
+        Maps a value x from a-b to c-d.
+    """
+    return (x - a) / (b - a) * (d - c) + c

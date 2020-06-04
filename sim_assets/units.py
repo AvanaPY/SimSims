@@ -23,6 +23,9 @@ class Resource:
         return surface
 
     def json(self):
+        """
+            Turns a resource into a .json dictionary.
+        """
         json = {
             'type':self.__class__.__name__
         }
@@ -34,6 +37,9 @@ class Resource:
 
     @staticmethod
     def from_json(json):
+        """
+            Static method that returns a resource from a .json dictionary.
+        """
         type_map = {v.__name__:v for v in Resource.__subclasses__()}
         t = type_map[json['type']](**json)
         return t
@@ -47,9 +53,11 @@ class Worker(Resource):
         kwargs['name'] = self.__class__.__name__
         super().__init__(*args, **kwargs)
         self._viability = kwargs.get('viability', 1)
+
     @property
     def viability(self):
         return self._viability
+    
     def restore_viability(self, viability=1):
         """
             Restores the worker's viability to a value. Might become useful?
@@ -273,6 +281,9 @@ class Place:
         pass
 
     def json(self):
+        """
+            Returns a json dictionary of this object.
+        """
         index_in_connections = [c.index for c in self._ingoing_connections]
         index_ou_connections = [c.index for c in self._outgoing_connections]
         resource_count = [r.json() for r in self._resources]
@@ -290,6 +301,9 @@ class Place:
 
     @staticmethod
     def from_json(json):
+        """
+            Returns a Place based on a json dictionary.
+        """
         place = CLASS_NAME_MAP_DICT[json['type']](**json)
         for r_json in json['resources']:
             place.insert(Resource.from_json(r_json))

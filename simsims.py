@@ -123,9 +123,7 @@ class SimSims:
                     self.map_select_resource, arg=[t], background_colour=(100, 255, 100), text_colour=(0, 0, 0),
                     keybinding=key)
             self._ui.add_button(btn)
-        
-        ############################################################
-        # The map itself of nodes etc.
+
         self._map = Map()
         self._started_sim = False
 
@@ -175,6 +173,9 @@ class SimSims:
         self._map._wait_threads()
     
     def _toggle_keybindings_panel(self):
+        """
+            Toggles the keybinding panel.
+        """
         self._show_keybind_panel = not self._show_keybind_panel
         if self._show_keybind_panel:
             self._toggle_keybindings_button.move(self._keybind_panel.dims[0], 0)
@@ -268,6 +269,9 @@ class SimSims:
     # Loading and saving
 
     def _toggle_load_menu(self):
+        """
+            Toggles the load menu.
+        """
         if self._show_load_panel:
             self._load_panel.hide()
             self._show_load_panel = False
@@ -276,11 +280,17 @@ class SimSims:
             self._show_load_panel = True
 
     def _load(self, item):
+        """
+            Loads a .json file.
+        """
         with open(f'{self._save_dir}/{item}', 'rb') as f:
             obj = json.loads(f.read())
             self._map.load_json(obj)
 
     def _save(self):
+        """
+            Saves the current simulation as a .json file.
+        """
         state = self._started_sim
 
         self.pause_simulation()
@@ -300,6 +310,9 @@ class SimSims:
         self._started_sim = state
 
     def _update_load_panel(self, content_height=20):
+        """
+            Updates the content of the load panel.
+        """
         self._load_panel.clear()
         for l in os.listdir(self._save_dir):
             name = l
